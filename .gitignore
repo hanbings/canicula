@@ -1,0 +1,5 @@
+# Does not come with compiled products.
+/target
+
+# This file is the rustsbi startup image of qemu and needs to be downloaded by the user.
+rustsbi-qemu.bin

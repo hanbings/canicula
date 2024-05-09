@@ -1,0 +1,13 @@
+{
+    "rust-analyzer.cargo.target": "riscv64gc-unknown-none-elf",
+    "rust-analyzer.checkOnSave.allTargets": false,
+    "rust-analyzer.checkOnSave.target": "riscv64gc-unknown-none-elf",
+    "cSpell.words": [
+        "rustflags",
+        "Tkernel",
+        "Cforce",
+        "riscv64gc-unknown-none-elf",
+        "cafs",
+        "libc",
+    ],
+}

@@ -1,0 +1,17 @@
+[package]
+name = "kernel"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "kernel"
+path = "src/main.rs"
+
+[dependencies]
+log = "0.4"
+lazy_static = { version = "1.4.0", features = ["spin_no_std"]  }
+sbi-rt = { version = "0.0.2", features = ["legacy"] }
+riscv = "0.11.1"
+
+[profile.release]
+debug = true
