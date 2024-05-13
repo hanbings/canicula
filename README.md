@@ -25,8 +25,8 @@
 
    ```shell
    $ rust-objcopy \
-    --binary-architecture=riscv64 target/riscv64gc-unknown-none-elf/release/kernel \
-    --strip-all -O binary target/riscv64gc-unknown-none-elf/release/kernel.bin
+       --binary-architecture=riscv64 target/riscv64gc-unknown-none-elf/release/kernel \
+       --strip-all -O binary target/riscv64gc-unknown-none-elf/release/kernel.bin
    ```
 
 4. [下载](https://github.com/rustsbi/rustsbi-qemu/releases) 适合 QEMU 使用的 rustsbi 二进制文件。
