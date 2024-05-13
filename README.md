@@ -6,37 +6,6 @@
 
 那么旅途从这里开始！
 
-## 📦 构建
+## 📦 博客
 
-1. 安装 Rust 工具链。
-
-   ```shell
-   $ rustup default nightly
-   $ rustup target add riscv64gc-unknown-none-elf
-   ```
-
-2. 使用如下指令构建内核模块。
-
-   ```shell
-   $ cargo build --bin kernel --release
-   ```
-
-3. 将 ELF 格式转换为二进制格式。
-
-   ```shell
-   $ rust-objcopy \
-       --binary-architecture=riscv64 target/riscv64gc-unknown-none-elf/release/kernel \
-       --strip-all -O binary target/riscv64gc-unknown-none-elf/release/kernel.bin
-   ```
-
-4. [下载](https://github.com/rustsbi/rustsbi-qemu/releases) 适合 QEMU 使用的 rustsbi 二进制文件。
-
-   解压获得 `rustsbi-qemu.bin` 文件，它将作为 QEMU 的 BIOS 文件，使用 QEMU 启动内核。
-
-   ```shell
-   $ qemu-system-riscv64 \
-       -machine virt \
-       -nographic \
-       -bios rustsbi-qemu.bin \
-       -device loader,file=target/riscv64gc-unknown-none-elf/release/kernel.bin,addr=0x80200000
-   ```
+[0 - 旅途开始的地方 - 基本开发环境](blog/dev-environment.md)
