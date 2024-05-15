@@ -9,5 +9,22 @@
         "riscv64gc-unknown-none-elf",
         "cafs",
         "libc",
+        /* ELF HEADER */
+        "e_phoff",
+        "e_shoff",
+        "e_ehsize",
+        "e_phentsize",
+        "e_phnum",
+        "e_shentsize",
+        "e_shnum",
+        "e_shstrndx",
+        /* ELF PROGRAM HEADER TABLE */
+        "p_vaddr",
+        "p_paddr",
+        "p_filesz",
+        "p_memsz",
+        /* ELF SECTION HEADER TABLE */
+        "sh_addralign",
+        "sh_entsize",
     ],
 }

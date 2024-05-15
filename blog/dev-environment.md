@@ -2,9 +2,9 @@
 
 参考：https://rcore-os.cn/rCore-Tutorial-Book-v3/chapter0/5setup-devel-env.html
 
-但上文提及的软件版本有些旧。
+但上文提及的 QEMU 有些旧。
 
-这里实用最新的软件版本。
+这里使用最新的 QEMU。
 
 本文使用的 Linux 发行版是 `debian`，如果使用 `ubuntu` 或 `linux mint` 等衍生版本应该不会在软件安装上出现问题。
 
