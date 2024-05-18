@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "canicula_efi"
+name = "canicula-efi"
 path = "src/efi.rs"
 
 [dependencies]

@@ -1,10 +1,10 @@
 [package]
-name = "cafs"
+name = "canicula-fs"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "cafs"
-path = "src/cafs.rs"
+name = "canicula_fs"
+path = "src/fs.rs"
 
 [dependencies]

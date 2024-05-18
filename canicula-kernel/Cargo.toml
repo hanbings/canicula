@@ -1,14 +1,16 @@
 [package]
-name = "kernel"
+name = "canicula-kernel"
 version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "kernel"
+name = "canicula-kernel"
 path = "src/main.rs"
 
-[target.riscv64gc-unknown-none-elf.dependencies]
+[dependencies]
 log = "0.4"
 lazy_static = { version = "1.4.0", features = ["spin_no_std"]  }
+
+[target.riscv64gc-unknown-none-elf.dependencies]
 sbi-rt = { version = "0.0.3", features = ["legacy"] }
 riscv = "0.11.1"

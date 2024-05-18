@@ -1,7 +1,14 @@
 {
-    "rust-analyzer.cargo.target": "riscv64gc-unknown-none-elf",
+    "rust-analyzer.cargo.target": "x86_64-unknown-none",
     "rust-analyzer.checkOnSave.allTargets": false,
-    "rust-analyzer.checkOnSave.target": "riscv64gc-unknown-none-elf",
+    "rust-analyzer.checkOnSave.target": "x86_64-unknown-none",
+    "rust-analyzer.linkedProjects": [
+        "./Cargo.toml",
+        "./canicula-efi/Cargo.toml",
+        "./canicula-fs/Cargo.toml",
+        "./canicula-kernel/Cargo.toml",
+        "./canicula-libs/Cargo.toml",
+    ],
     "cSpell.words": [
         "rustflags",
         "Tkernel",

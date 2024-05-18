@@ -1,10 +1,10 @@
 [workspace]
 resolver = "2"
 members = [
-    "cafs", 
     "canicula-efi",
-    "kernel", 
-    "libc", 
+    "canicula-fs",
+    "canicula-kernel",
+    "canicula-libs",
 ]
 
 [profile.release]
