@@ -1,4 +1,4 @@
-use crate::sbi::console_write_byte;
+use super::sbi::console_write_byte;
 use core::fmt::{self, Write};
 
 struct Stdout;
@@ -26,6 +26,6 @@ macro_rules! print {
 #[macro_export]
 macro_rules! println {
     ($fmt: literal $(, $($arg: tt)+)?) => {
-        $crate::console::print(format_args!(concat!($fmt, "\n") $(, $($arg)+)?))
+        $crate::arch::riscv::console::print(format_args!(concat!($fmt, "\n") $(, $($arg)+)?))
     }
 }

@@ -1,0 +1,12 @@
+[package]
+name = "canicula-efi"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "canicula_efi"
+path = "src/efi.rs"
+
+[dependencies]
+log = "0.4.21"
+uefi = { version = "0.28.0", features = ["logger", "panic_handler"] }

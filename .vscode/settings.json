@@ -10,6 +10,7 @@
         "riscv64gc-unknown-none-elf",
         "cafs",
         "libc",
+        "uefi",
         /* ELF HEADER */
         "e_phoff",
         "e_shoff",
