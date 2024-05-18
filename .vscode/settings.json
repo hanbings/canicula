@@ -6,6 +6,7 @@
         "rustflags",
         "Tkernel",
         "Cforce",
+        "riscv",
         "riscv64gc-unknown-none-elf",
         "cafs",
         "libc",

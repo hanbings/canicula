@@ -3,5 +3,5 @@ target = "riscv64gc-unknown-none-elf"
 
 [target.riscv64gc-unknown-none-elf]
 rustflags = [
-    "-Clink-arg=-Tkernel/src/linker.ld", "-Cforce-frame-pointers=yes"
+    "-Clink-arg=-Tkernel/src/arch/riscv/linker.ld", "-Cforce-frame-pointers=yes"
 ]

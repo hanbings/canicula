@@ -5,3 +5,6 @@ members = [
     "kernel", 
     "libc", 
 ]
+
+[profile.release]
+debug = true

@@ -13,7 +13,8 @@ mod logging;
 mod qemu;
 mod sbi;
 
-global_asm!(include_str!("entry.asm"));
+#[cfg(target_arch = "riscv64")]
+global_asm!(include_str!("./arch/riscv/entry.asm"));
 
 pub fn clear_bss() {
     extern "C" {
