@@ -1,3 +1,9 @@
+[build]
+target = "x86_64-unknown-none"
+
+[unstable]
+build-std = ["core", "compiler_builtins"]
+
 [target.riscv64gc-unknown-none-elf]
 rustflags = [
     "-Clink-arg=-Tkernel/src/arch/riscv/linker.ld", "-Cforce-frame-pointers=yes"

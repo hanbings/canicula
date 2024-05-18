@@ -9,3 +9,8 @@ members = [
 
 [profile.release]
 debug = true
+panic = "abort"
+
+[profile.dev]
+debug = true
+panic = "abort"

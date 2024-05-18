@@ -6,6 +6,17 @@
 
 那么旅途从这里开始！
 
+## 🔨 快速构建
+
+```shell
+# 默认构建 x86 架构内核
+$ cargo build
+# 构建 x86 EFI 文件
+$ cargo build --bin canicula_efi --target x86_64-unknown-uefi
+# 构建 RISC-V 架构内核
+$ cargo build --target riscv64gc-unknown-none-elf
+```
+
 ## 📦 博客
 
 [0 - 基本开发环境](blog/dev-environment.md)

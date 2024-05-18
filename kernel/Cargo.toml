@@ -7,8 +7,8 @@ edition = "2021"
 name = "kernel"
 path = "src/main.rs"
 
-[dependencies]
+[target.riscv64gc-unknown-none-elf.dependencies]
 log = "0.4"
 lazy_static = { version = "1.4.0", features = ["spin_no_std"]  }
-sbi-rt = { version = "0.0.2", features = ["legacy"] }
+sbi-rt = { version = "0.0.3", features = ["legacy"] }
 riscv = "0.11.1"

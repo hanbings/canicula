@@ -1,2 +1,2 @@
 [toolchain]
-targets = ["riscv64gc-unknown-none-elf", "x86_64-unknown-uefi"]
+targets = ["x86_64-unknown-uefi", "x86_64-unknown-none", "riscv64gc-unknown-none-elf"]

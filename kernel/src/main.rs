@@ -10,5 +10,5 @@ pub fn rust_main() -> ! {
     arch::riscv::entry();
 
     #[cfg(target_arch = "x86_64")]
-    arch::x86_64::entry();
+    arch::x86::entry();
 }

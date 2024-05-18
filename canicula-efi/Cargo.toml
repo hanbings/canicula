@@ -3,7 +3,7 @@ name = "canicula-efi"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
+[[bin]]
 name = "canicula_efi"
 path = "src/efi.rs"
 
