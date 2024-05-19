@@ -15,6 +15,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf4b9d6a944f767f8e5e0db018570623c85f3d925ac718db4e06d0187adb21c1"
 
 [[package]]
+name = "bootloader_api"
+version = "0.11.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a35ba5100c2431e20b924c8103c2cf8adb919ed9880f625e8770c3cb9d1b06aa"
+
+[[package]]
 name = "canicula-efi"
 version = "0.1.0"
 dependencies = [
@@ -34,6 +40,7 @@ dependencies = [
 name = "canicula-kernel"
 version = "0.1.0"
 dependencies = [
+ "bootloader_api",
  "lazy_static",
  "log",
  "riscv",

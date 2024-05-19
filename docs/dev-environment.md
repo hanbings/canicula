@@ -60,14 +60,33 @@
 2. 使用如下指令构建 x86 版本的内核模块。
 
    ```shell
-   $ cargo build
+   $ cargo buil
    ```
 
 ### x86-64
 
+1. 首先编译 x86-64 的 EFI 文件。
+
+   ```shell
+   $ cargo build --bin canicula-efi --target x86_64-unknown-uefi
+   $ cp target/x86_64-unknown-uefi/debug/canicula-efi.efi esp/efi/boot/bootx64.efi
+   ```
+
+2. 启动 QEMU 虚拟机：
+
+   ```shell
+   $ sudo apt install ovmf
+   $ qemu-system-x86_64 -enable-kvm \
+       -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE.fd \
+       -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_VARS.fd \
+       -drive format=raw,file=fat:rw:esp
+   ```
+
+如果出现 `qemu-system-x86_64: failed to initialize kvm: Permission denied` 问题可以尝试 `sudo chmod 666 /dev/kvm`。
+
 ### AArch64
 
-### RISC-V 架构
+### RISC-V
 
 在 RISC-V 架构中，我们使用 RustSBI 直接加载内核文件。
 

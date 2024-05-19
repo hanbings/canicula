@@ -22,6 +22,7 @@
         "cafs",
         "libc",
         "uefi",
+        "bootloader",
         /* ELF HEADER */
         "e_phoff",
         "e_shoff",
