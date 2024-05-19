@@ -8,3 +8,6 @@ name = "canicula_libs"
 path = "src/libs.rs"
 
 [dependencies]
+
+[build-dependencies]
+toml = "0.8.13"

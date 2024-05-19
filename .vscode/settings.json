@@ -10,6 +10,9 @@
         "./canicula-libs/Cargo.toml",
     ],
     "cSpell.words": [
+        "rustc",
+        "rustup",
+        "builtins",
         "rustflags",
         "Tkernel",
         "Cforce",

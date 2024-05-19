@@ -8,3 +8,6 @@ name = "canicula_fs"
 path = "src/fs.rs"
 
 [dependencies]
+
+[build-dependencies]
+toml = "0.8.13"

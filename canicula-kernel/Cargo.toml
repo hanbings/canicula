@@ -14,3 +14,6 @@ lazy_static = { version = "1.4.0", features = ["spin_no_std"]  }
 [target.riscv64gc-unknown-none-elf.dependencies]
 sbi-rt = { version = "0.0.3", features = ["legacy"] }
 riscv = "0.11.1"
+
+[build-dependencies]
+toml = "0.8.13"

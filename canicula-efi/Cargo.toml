@@ -10,3 +10,6 @@ path = "src/efi.rs"
 [dependencies]
 log = "0.4.21"
 uefi = { version = "0.28.0", features = ["logger", "panic_handler"] }
+
+[build-dependencies]
+toml = "0.8.13"

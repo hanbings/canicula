@@ -1,14 +1,12 @@
 # 基本开发环境
 
-参考：https://rcore-os.cn/rCore-Tutorial-Book-v3/chapter0/5setup-devel-env.html
-
-但上文提及的 QEMU 有些旧。
-
-这里使用最新的 QEMU。
-
-本文使用的 Linux 发行版是 `debian`，如果使用 `ubuntu` 或 `linux mint` 等衍生版本应该不会在软件安装上出现问题。
+为了支持 x86-64、AArch64 和 RISC-V，我们需要这些架构对应的 QEMU 模拟器和在 Rust 中添加差异处理的代码。
 
 ## 构建 QEMU
+
+首先需要构建 [QEMU](https://www.qemu.org/)。
+
+本文基于 Debian 发行版，如果使用其他发行版可能需要自行补齐依赖。
 
 1. 安装编译 QEMU 的构建依赖
 
@@ -31,7 +29,7 @@
 
    ```shell
    # 建议是把 --enable-sdl 图形接口支持和 --enable-slirp 网卡支持打开
-   $ ./configure --target-list=riscv64-softmmu,riscv64-linux-user --enable-sdl --enable-slirp
+   $ ./configure --target-list=x86_64-softmmu,x86_64-linux-user,riscv64-softmmu,riscv64-linux-user,aarch64-softmmu,aarch64-linux-user --enable-sdl --enable-slirp
    $ make -j$(nproc)
    ```
 
@@ -48,18 +46,32 @@
 
    ```shell
    $ rustup default nightly
+   # UEFI 的构建目标
+   $ rustup target add x86_64-unknown-uefi
+   $ rustup target add aarch64-unknown-uefi
+   # 内核目标架构的构建目标
+   $ rustup target add x86_64-unknown-none
+   $ rustup target add aarch64-unknown-none
    $ rustup target add riscv64gc-unknown-none-elf
    $ cargo install cargo-binutils
    $ rustup component add llvm-tools-preview
    ```
 
-2. 使用如下指令构建内核模块。
+2. 使用如下指令构建 x86 版本的内核模块。
 
    ```shell
-   $ cargo build --bin kernel --release
+   $ cargo build
    ```
 
-3. 将 ELF 格式转换为二进制格式。
+### x86-64
+
+### AArch64
+
+### RISC-V 架构
+
+在 RISC-V 架构中，我们使用 RustSBI 直接加载内核文件。
+
+1. 将 ELF 格式转换为二进制格式。
 
    ```shell
    $ rust-objcopy \
@@ -67,14 +79,7 @@
        --strip-all -O binary target/riscv64gc-unknown-none-elf/release/kernel.bin
    ```
 
-   如果提示 `rust-objcopy` 未找到需要补全工具链
-
-   ```shell
-   $ cargo install cargo-binutils
-   $ rustup component add llvm-tools-preview
-   ```
-
-4. [下载](https://github.com/rustsbi/rustsbi-qemu/releases) 适合 QEMU 使用的 rustsbi 二进制文件。
+2. [下载](https://github.com/rustsbi/rustsbi-qemu/releases) 适合 QEMU 使用的 rustsbi 二进制文件。
 
    解压获得 `rustsbi-qemu.bin` 文件，它将作为 QEMU 的 BIOS 文件，使用 QEMU 启动内核。
 
@@ -85,3 +90,13 @@
        -bios rustsbi-qemu.bin \
        -device loader,file=target/riscv64gc-unknown-none-elf/release/kernel.bin,addr=0x80200000
    ```
+
+## 如何实现的多架构内核？
+
+算上 UEFI 环境，一共五个环境，三种架构。
+
+项目在 x86-64 和 AArch64 中使用 UEFI，在 RISC-V64 中使用 RustSBI。
+
+## 构建时加入环境变量
+
+使用 `build.rs` 编译脚本即可在编译时惨入（ `println!("cargo::rustc-env={}={}", key, value);`） 环境变量。
