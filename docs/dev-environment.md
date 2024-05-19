@@ -29,7 +29,10 @@
 
    ```shell
    # 建议是把 --enable-sdl 图形接口支持和 --enable-slirp 网卡支持打开
-   $ ./configure --target-list=x86_64-softmmu,x86_64-linux-user,riscv64-softmmu,riscv64-linux-user,aarch64-softmmu,aarch64-linux-user --enable-sdl --enable-slirp
+   $ ./configure --target-list=x86_64-softmmu,x86_64-linux-user, \
+       riscv64-softmmu,riscv64-linux-user, \
+       aarch64-softmmu,aarch64-linux-user  \
+       --enable-sdl --enable-slirp
    $ make -j$(nproc)
    ```
 
