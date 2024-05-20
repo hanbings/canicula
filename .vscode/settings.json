@@ -21,8 +21,10 @@
         "riscv64gc-unknown-none-elf",
         "cafs",
         "libc",
-        "uefi",
         "bootloader",
+        /* EFI */
+        "uefi",
+        "proto",
         /* ELF HEADER */
         "e_phoff",
         "e_shoff",
