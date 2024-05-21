@@ -9,6 +9,7 @@ path = "src/efi.rs"
 
 [dependencies]
 log = "0.4"
+xmas-elf = "0.9.1"
 uefi = { version = "0.28.0", features = ["logger", "panic_handler"] }
 
 [build-dependencies]

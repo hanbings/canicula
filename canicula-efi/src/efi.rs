@@ -1,41 +1,97 @@
 #![no_std]
 #![no_main]
 
+mod config;
+
+use log::info;
 use uefi::{
     prelude::*,
-    proto::console::gop::{BltOp, BltPixel, GraphicsOutput},
+    proto::media::{
+        file::{File, FileAttribute, FileInfo, FileMode, FileType},
+        fs::SimpleFileSystem,
+    },
+    table::boot::{AllocateType, MemoryType},
+    CStr16,
 };
+use xmas_elf::ElfFile;
+
+use crate::config::x86_64::{FILE_BUFFER_SIZE, KERNEL_PATH, PAGE_SIZE};
 
 #[entry]
 fn main(_image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
     uefi::helpers::init(&mut system_table).unwrap();
+    info!("Canicula: Starting the UEFI bootloader...");
+    info!(
+        "config: file_buffer_size = {}, page_size = {}, kernel_path = {}",
+        FILE_BUFFER_SIZE, PAGE_SIZE, KERNEL_PATH
+    );
 
     // load boot table
     let boot_table = system_table.boot_services();
 
-    // load graphics driver
-    let gop_handle = boot_table
-        .get_handle_for_protocol::<GraphicsOutput>()
+    // load simple file system protocol
+    let simple_file_system_handle = boot_table
+        .get_handle_for_protocol::<SimpleFileSystem>()
         .unwrap();
 
-    let mut gop = boot_table
-        .open_protocol_exclusive::<GraphicsOutput>(gop_handle)
+    let mut simple_file_system_protocol = boot_table
+        .open_protocol_exclusive::<SimpleFileSystem>(simple_file_system_handle)
         .unwrap();
 
-    // enumerate modes
-    let mode = gop.query_mode(12, &boot_table).unwrap();
-    let _ = gop.set_mode(&mode);
+    // open volume
+    let mut root = simple_file_system_protocol
+        .open_volume()
+        .expect("Cannot open volume");
 
-    // fill screen
-    let red_blt_pixel = BltPixel::new(255, 221, 131);
-    let (width, _height) = mode.info().resolution();
-
-    let op = BltOp::VideoFill {
-        color: red_blt_pixel,
-        dest: (0, 0),
-        dims: (width, 80),
+    // open kernel file in the root using simple file system
+    let mut kernel_path_buffer = [0u16; 0x40];
+    let kernel_path = CStr16::from_str_with_buf(KERNEL_PATH, &mut kernel_path_buffer)
+        .expect("Invalid kernel path!");
+    let kernel_file_handle = root
+        .open(kernel_path, FileMode::Read, FileAttribute::empty())
+        .expect("Cannot open kernel file");
+    let mut kernel_file = match kernel_file_handle.into_type().unwrap() {
+        FileType::Regular(f) => f,
+        _ => panic!("This file does not exist!"),
     };
-    let _ = gop.blt(op);
+    info!("Kernel file opened successfully!");
+
+    // load kernel file info and size
+    let mut kernel_file_info_buffer = [0u8; FILE_BUFFER_SIZE];
+    let kernel_file_info: &mut FileInfo = kernel_file
+        .get_info(&mut kernel_file_info_buffer)
+        .expect("Cannot get file info");
+    info!("Kernel file info: {:?}", kernel_file_info);
+    let kernel_file_size =
+        usize::try_from(kernel_file_info.file_size()).expect("Invalid file size!");
+    info!("Kernel file size: {:?}", kernel_file_size);
+
+    // load kernel file into memory
+    let kernel_file_address = boot_table
+        .allocate_pages(
+            AllocateType::AnyPages,
+            MemoryType::LOADER_DATA,
+            (kernel_file_size - 1) / PAGE_SIZE + 1,
+        )
+        .expect("Cannot allocate memory in the RAM!") as *mut u8;
+
+    let kernel_file_in_memory = unsafe {
+        core::ptr::write_bytes(kernel_file_address, 0, kernel_file_size);
+        core::slice::from_raw_parts_mut(kernel_file_address, kernel_file_size)
+    };
+    let kernel_file_size = kernel_file
+        .read(kernel_file_in_memory)
+        .expect("Cannot read file into the memory!");
+    info!("Kernel file loaded into memory successfully!");
+
+    let kernel_content = &mut kernel_file_in_memory[..kernel_file_size];
+    info!(
+        "Kernel file address: 0x{:x}",
+        kernel_content.as_ptr() as *const u8 as usize
+    );
+
+    // parsing kernel elf
+    let _kernel_elf = ElfFile::new(kernel_content).expect("Not a valid ELF file.");
 
     boot_table.stall(10_000_000);
     Status::SUCCESS
