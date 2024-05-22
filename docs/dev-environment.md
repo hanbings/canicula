@@ -63,7 +63,7 @@
 2. 使用如下指令构建 x86 版本的内核模块。
 
    ```shell
-   $ cargo buil
+   $ cargo build
    ```
 
 ### x86-64

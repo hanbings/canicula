@@ -25,18 +25,20 @@ $ cargo build --bin canicula-efi --target aarch-unknown-uefi
 
 [0 - 基本开发环境](docs/dev-environment.md)
 
-[1 - ELF 文件格式（WIP）](docs/efi.md)
+[1 - 引导](docs/bootloader.md)
 
-[2 - 内存管理（WIP）](docs/mm.md)
+[2 - ELF 文件格式（WIP）](docs/efi.md)
 
-[3 - 进程调度（WIP）](docs/process.md)
+[3 - 内存管理（WIP）](docs/mm.md)
 
-[4 - CaFS 文件系统（WIP）](bdocs/fs.md)
+[4 - 进程调度（WIP）](docs/process.md)
 
-[5 - 线程、线程通信（WIP）](docs/thread.md)
+[5 - CaFS 文件系统（WIP）](bdocs/fs.md)
 
-[6 - 多核（WIP）](docs/muilt-core.md)
+[6 - 线程、线程通信（WIP）](docs/thread.md)
 
-[7 - 外部接口：USB、网卡与显卡（WIP）](docs/extend-interface.md)
+[7 - 多核（WIP）](docs/muilt-core.md)
 
-[8 - 显存映射与图形化（WIP）](docs/graphics.md)
+[8 - 外部接口：USB、网卡与显卡（WIP）](docs/extend-interface.md)
+
+[9 - 显存映射与图形化（WIP）](docs/graphics.md)
