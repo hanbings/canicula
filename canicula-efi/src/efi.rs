@@ -44,7 +44,7 @@ fn main(_image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
         .expect("Cannot open volume");
 
     // open kernel file in the root using simple file system
-    let mut kernel_path_buffer = [0u16; 0x40];
+    let mut kernel_path_buffer = [0u16; FILE_BUFFER_SIZE];
     let kernel_path = CStr16::from_str_with_buf(KERNEL_PATH, &mut kernel_path_buffer)
         .expect("Invalid kernel path!");
     let kernel_file_handle = root
@@ -71,7 +71,7 @@ fn main(_image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
         .allocate_pages(
             AllocateType::AnyPages,
             MemoryType::LOADER_DATA,
-            (kernel_file_size - 1) / PAGE_SIZE + 1,
+            kernel_file_size / PAGE_SIZE + 1,
         )
         .expect("Cannot allocate memory in the RAM!") as *mut u8;
 
@@ -85,10 +85,8 @@ fn main(_image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
     info!("Kernel file loaded into memory successfully!");
 
     let kernel_content = &mut kernel_file_in_memory[..kernel_file_size];
-    info!(
-        "Kernel file address: 0x{:x}",
-        kernel_content.as_ptr() as *const u8 as usize
-    );
+    let kernel_address = kernel_content.as_ptr() as *const u8 as usize;
+    info!("Kernel file address: 0x{:x}", kernel_address);
 
     // parsing kernel elf
     let _kernel_elf = ElfFile::new(kernel_content).expect("Not a valid ELF file.");

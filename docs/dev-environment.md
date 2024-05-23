@@ -1,12 +1,12 @@
 # 基本开发环境
 
+_本文基于 [Debian 发行版](https://www.debian.org/)，如果使用其他发行版可能需要自行补齐依赖。_
+
 为了支持 x86-64、AArch64 和 RISC-V，我们需要这些架构对应的 QEMU 模拟器和在 Rust 中添加差异处理的代码。
 
 ## 构建 QEMU
 
 首先需要构建 [QEMU](https://www.qemu.org/)。
-
-本文基于 Debian 发行版，如果使用其他发行版可能需要自行补齐依赖。
 
 1. 安装编译 QEMU 的构建依赖
 
@@ -28,7 +28,7 @@
 3. 编译
 
    ```shell
-   # 建议是把 --enable-sdl 图形接口支持和 --enable-slirp 网卡支持打开
+   # 建议把 --enable-sdl 图形接口支持和 --enable-slirp 网卡支持打开
    $ ./configure --target-list=x86_64-softmmu,x86_64-linux-user, \
        riscv64-softmmu,riscv64-linux-user, \
        aarch64-softmmu,aarch64-linux-user  \
@@ -91,7 +91,7 @@
 
 ### RISC-V
 
-在 RISC-V 架构中，我们使用 RustSBI 直接加载内核文件。
+在 RISC-V 架构中，我们使用 [RustSBI](https://github.com/rustsbi/rustsbi) 直接加载内核文件。
 
 1. 将 ELF 格式转换为二进制格式。
 
@@ -112,13 +112,3 @@
        -bios rustsbi-qemu.bin \
        -device loader,file=target/riscv64gc-unknown-none-elf/release/kernel.bin,addr=0x80200000
    ```
-
-## 如何实现的多架构内核？
-
-算上 UEFI 环境，一共五个环境，三种架构。
-
-项目在 x86-64 和 AArch64 中使用 UEFI，在 RISC-V64 中使用 RustSBI。
-
-## 构建时加入环境变量
-
-使用 `build.rs` 编译脚本即可在编译时惨入（ `println!("cargo::rustc-env={}={}", key, value);`） 环境变量。
