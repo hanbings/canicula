@@ -181,18 +181,29 @@ let mut simple_file_system_protocol = boot_services
 
 **第二步**：开辟内存空间，先将内核路径名字加载到内存，再将内核文件信息加载到内存，最后再把内核文件本体加载到内存
 
+注意这里的单位换算：
+
+`0x400` 实际上是十进制的 `1024`，也就是 _1k（kbit）_
+
+`0x1000` 实际上是十进制的 `4096`，也就是 _4k（kbit）_
+
 ```rust
 pub const FILE_BUFFER_SIZE: usize = 0x400;
 pub const PAGE_SIZE: usize = 0x1000;
 pub const KERNEL_PATH: &str = "\\canicula-kernel";
+```
 
-// 我们的内核名称为 canicula-kernel，目录在 esp/canicula-kernel
-// 即是 UEFI 在 QEMU 能读取到的标卷的根目录
-// 所以我们只需要获取一个根目录就够了
+我们的内核名称为 canicula-kernel，目录在 esp/canicula-kernel，即是 UEFI 在 QEMU 能读取到的标卷的根目录，所以我们只需要获取一个根目录就够了。
+
+```rust
 let mut root = simple_file_system_protocol
     .open_volume()
     .expect("Cannot open volume");
+```
 
+然后要把内核路径的名字加载到内存，获取到 `File` 的 `Handle`。
+
+```rust
 // 先创建一个路径名称的缓冲区（实际上并不需要这么大的空间 我们的路径没有这么长）
 let mut kernel_path_buffer = [0u16; FILE_BUFFER_SIZE];
 // 将路径转为 CStr16 类型
@@ -207,7 +218,11 @@ let mut kernel_file = match kernel_file_handle.into_type().unwrap() {
     FileType::Regular(f) => f,
     _ => panic!("This file does not exist!"),
 };
+```
 
+接着获取到文件信息，我们是想要拿到文件的长度。
+
+```rust
 // 为了将文件真正加载到内存还需要文件的长度（也就是大小）
 // 这个长度在文件信息里
 // 所以为文件信息开辟一片缓冲区，然后将它读取到这里
@@ -218,7 +233,11 @@ let kernel_file_info: &mut FileInfo = kernel_file
 // 然后拿到文件长度
 let kernel_file_size =
     usize::try_from(kernel_file_info.file_size()).expect("Invalid file size!");
+```
 
+最后，为内核开辟一整片内存空间，然后从文件读到内存中。
+
+```rust
 // 接着要用 allocate_pages 开辟一篇内存空间，确保内核可以独自占用一片内存空间
 let kernel_file_address = boot_services
     .allocate_pages(
@@ -243,6 +262,160 @@ let kernel_file_size = kernel_file
     .read(kernel_file_in_memory)
     .expect("Cannot read file into the memory!");
 ```
+
+**第三步**：获取到内核内存的起始地址，然后跳转！
+
+```rust
+let kernel_content = &mut kernel_file_in_memory[..kernel_file_size];
+let kernel_address = kernel_content.as_ptr() as *const u8 as usize;
+
+// 偷懒力，用 xmas-elf 解析 elf 文件
+let kernel_elf = ElfFile::new(kernel_content).expect("Not a valid ELF file.");
+let kernel_entry_offest = kernel.elf.header.pt2.entry_point() as usize;
+
+// 将内核文件地址加上内核入口编译得到最终地址
+let kernel_entry_address = kernel_address + kernel_entry_offest;
+
+// 跳转！
+unsafe {
+    core::arch::asm!("jmp {}", in(reg) kernel_entry_address);
+}
+```
+
+**完整代码**
+
+<details>
+<summary>贴一个完整的代码</summary>
+
+```rust
+// Cargo.toml
+[package]
+name = "canicula-efi"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "canicula-efi"
+path = "src/efi.rs"
+
+[dependencies]
+log = "0.4"
+xmas-elf = "0.9.1"
+uefi = { version = "0.28.0", features = ["logger", "panic_handler"] }
+
+[build-dependencies]
+toml = "0.8.13"
+```
+
+```rust
+// src/efi.rs
+#![no_std]
+#![no_main]
+
+mod config;
+
+use log::info;
+use uefi::{
+    prelude::*,
+    proto::media::{
+        file::{File, FileAttribute, FileInfo, FileMode, FileType},
+        fs::SimpleFileSystem,
+    },
+    table::boot::{AllocateType, MemoryType},
+    CStr16,
+};
+use xmas_elf::ElfFile;
+
+use crate::config::x86_64::{FILE_BUFFER_SIZE, KERNEL_PATH, PAGE_SIZE};
+
+#[entry]
+fn main(_image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
+    uefi::helpers::init(&mut system_table).unwrap();
+    info!("Canicula: Starting the UEFI bootloader...");
+    info!(
+        "config: file_buffer_size = {}, page_size = {}, kernel_path = {}",
+        FILE_BUFFER_SIZE, PAGE_SIZE, KERNEL_PATH
+    );
+
+    // load boot table
+    let boot_services = system_table.boot_services();
+
+    // load simple file system protocol
+    let simple_file_system_handle = boot_services
+        .get_handle_for_protocol::<SimpleFileSystem>()
+        .expect("Cannot get protocol handle");
+
+    let mut simple_file_system_protocol = boot_services
+        .open_protocol_exclusive::<SimpleFileSystem>(simple_file_system_handle)
+        .expect("Cannot get simple file system protocol");
+
+    // open volume
+    let mut root = simple_file_system_protocol
+        .open_volume()
+        .expect("Cannot open volume");
+
+    // open kernel file in the root using simple file system
+    let mut kernel_path_buffer = [0u16; FILE_BUFFER_SIZE];
+    let kernel_path = CStr16::from_str_with_buf(KERNEL_PATH, &mut kernel_path_buffer)
+        .expect("Invalid kernel path!");
+    let kernel_file_handle = root
+        .open(kernel_path, FileMode::Read, FileAttribute::empty())
+        .expect("Cannot open kernel file");
+    let mut kernel_file = match kernel_file_handle.into_type().unwrap() {
+        FileType::Regular(f) => f,
+        _ => panic!("This file does not exist!"),
+    };
+    info!("Kernel file opened successfully!");
+
+    // load kernel file info and size
+    let mut kernel_file_info_buffer = [0u8; FILE_BUFFER_SIZE];
+    let kernel_file_info: &mut FileInfo = kernel_file
+        .get_info(&mut kernel_file_info_buffer)
+        .expect("Cannot get file info");
+    info!("Kernel file info: {:?}", kernel_file_info);
+    let kernel_file_size =
+        usize::try_from(kernel_file_info.file_size()).expect("Invalid file size!");
+    info!("Kernel file size: {:?}", kernel_file_size);
+
+    // load kernel file into memory
+    let kernel_file_address = boot_services
+        .allocate_pages(
+            AllocateType::AnyPages,
+            MemoryType::LOADER_DATA,
+            kernel_file_size / PAGE_SIZE + 1,
+        )
+        .expect("Cannot allocate memory in the RAM!") as *mut u8;
+
+    let kernel_file_in_memory = unsafe {
+        core::ptr::write_bytes(kernel_file_address, 0, kernel_file_size);
+        core::slice::from_raw_parts_mut(kernel_file_address, kernel_file_size)
+    };
+    let kernel_file_size = kernel_file
+        .read(kernel_file_in_memory)
+        .expect("Cannot read file into the memory!");
+    info!("Kernel file loaded into memory successfully!");
+
+    let kernel_content = &mut kernel_file_in_memory[..kernel_file_size];
+    let kernel_address = kernel_content.as_ptr() as *const u8 as usize;
+    info!("Kernel file address: 0x{:x}", kernel_address);
+
+    // parsing kernel elf
+    let kernel_elf = ElfFile::new(kernel_content).expect("Not a valid ELF file.");
+    let kernel_entry_offest = kernel.elf.header.pt2.entry_point() as usize;
+
+    let kernel_entry_address = kernel_address + kernel_entry_offest;
+
+    // jmp to kernel
+    unsafe {
+        core::arch::asm!("jmp {}", in(reg) kernel_entry_address);
+    }
+
+    boot_services.stall(10_000_000);
+    Status::SUCCESS
+}
+```
+
+</details>
 
 ### AArch64
 
