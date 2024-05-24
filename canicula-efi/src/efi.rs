@@ -27,16 +27,16 @@ fn main(_image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
     );
 
     // load boot table
-    let boot_table = system_table.boot_services();
+    let boot_services = system_table.boot_services();
 
     // load simple file system protocol
-    let simple_file_system_handle = boot_table
+    let simple_file_system_handle = boot_services
         .get_handle_for_protocol::<SimpleFileSystem>()
-        .unwrap();
+        .expect("Cannot get protocol handle");
 
-    let mut simple_file_system_protocol = boot_table
+    let mut simple_file_system_protocol = boot_services
         .open_protocol_exclusive::<SimpleFileSystem>(simple_file_system_handle)
-        .unwrap();
+        .expect("Cannot get simple file system protocol");
 
     // open volume
     let mut root = simple_file_system_protocol
@@ -67,7 +67,7 @@ fn main(_image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
     info!("Kernel file size: {:?}", kernel_file_size);
 
     // load kernel file into memory
-    let kernel_file_address = boot_table
+    let kernel_file_address = boot_services
         .allocate_pages(
             AllocateType::AnyPages,
             MemoryType::LOADER_DATA,
@@ -91,6 +91,6 @@ fn main(_image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
     // parsing kernel elf
     let _kernel_elf = ElfFile::new(kernel_content).expect("Not a valid ELF file.");
 
-    boot_table.stall(10_000_000);
+    boot_services.stall(10_000_000);
     Status::SUCCESS
 }
