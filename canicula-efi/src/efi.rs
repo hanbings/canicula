@@ -89,7 +89,15 @@ fn main(_image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
     info!("Kernel file address: 0x{:x}", kernel_address);
 
     // parsing kernel elf
-    let _kernel_elf = ElfFile::new(kernel_content).expect("Not a valid ELF file.");
+    let kernel_elf = ElfFile::new(kernel_content).expect("Not a valid ELF file.");
+    let kernel_entry_offset = kernel_elf.header.pt2.entry_point() as usize;
+
+    let kernel_entry_address = kernel_address + kernel_entry_offset;
+
+    // jmp to kernel
+    unsafe {
+        core::arch::asm!("jmp {}", in(reg) kernel_entry_address);
+    }
 
     boot_services.stall(10_000_000);
     Status::SUCCESS

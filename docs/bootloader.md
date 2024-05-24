@@ -271,7 +271,7 @@ let kernel_address = kernel_content.as_ptr() as *const u8 as usize;
 
 // 偷懒力，用 xmas-elf 解析 elf 文件
 let kernel_elf = ElfFile::new(kernel_content).expect("Not a valid ELF file.");
-let kernel_entry_offest = kernel.elf.header.pt2.entry_point() as usize;
+let kernel_entry_offset = kernel_elf.header.pt2.entry_point() as usize;
 
 // 将内核文件地址加上内核入口编译得到最终地址
 let kernel_entry_address = kernel_address + kernel_entry_offest;
@@ -401,7 +401,7 @@ fn main(_image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
 
     // parsing kernel elf
     let kernel_elf = ElfFile::new(kernel_content).expect("Not a valid ELF file.");
-    let kernel_entry_offest = kernel.elf.header.pt2.entry_point() as usize;
+    let kernel_entry_offset = kernel_elf.header.pt2.entry_point() as usize;
 
     let kernel_entry_address = kernel_address + kernel_entry_offest;
 
