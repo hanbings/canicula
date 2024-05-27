@@ -1,10 +1,10 @@
 [package]
-name = "canicula-libs"
+name = "canicula-ext4"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "canicula_libs"
-path = "src/libs.rs"
+name = "canicula_ext4"
+path = "src/ext4.rs"
 
 [dependencies]
