@@ -49,6 +49,7 @@
         "incompat",
         "prealloc",
         "inum",
-        "kbytes"
+        "kbytes",
+        "uninit",
     ],
 }
