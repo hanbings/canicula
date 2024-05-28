@@ -23,10 +23,9 @@
         "cafs",
         "libc",
         "bootloader",
-        /* EFI */
         "uefi",
+        "repr",
         "proto",
-        /* ELF HEADER */
         "e_phoff",
         "e_shoff",
         "e_ehsize",
@@ -35,13 +34,21 @@
         "e_shentsize",
         "e_shnum",
         "e_shstrndx",
-        /* ELF PROGRAM HEADER TABLE */
         "p_vaddr",
         "p_paddr",
         "p_filesz",
         "p_memsz",
-        /* ELF SECTION HEADER TABLE */
-        "sh_addralign",
+        "sh_addralign", 
         "sh_entsize",
+        "inodes",
+        "wtime",
+        "lastcheck",
+        "checkinterval",
+        "resuid",
+        "resgid",
+        "incompat",
+        "prealloc",
+        "inum",
+        "kbytes"
     ],
 }

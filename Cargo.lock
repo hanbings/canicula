@@ -36,6 +36,9 @@ dependencies = [
 [[package]]
 name = "canicula-ext4"
 version = "0.1.0"
+dependencies = [
+ "canicula-common",
+]
 
 [[package]]
 name = "canicula-kernel"
