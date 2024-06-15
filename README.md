@@ -47,6 +47,4 @@ $ cargo build --bin canicula-efi --target aarch-unknown-uefi
 
 [Ext - 模块化设计（WIP）](docs/design.md)
 
-[Ext - ELF 文件格式（WIP）](docs/efi.md)
-
-[Ext - ext4 文件系统（WIP）](docs/ext4.md)
+[Ext - Ext4 文件系统（WIP）](docs/ext4.md)
