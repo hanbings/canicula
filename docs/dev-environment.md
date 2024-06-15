@@ -63,7 +63,7 @@ _本文基于 [Debian 发行版](https://www.debian.org/)，如果使用其他�
 2. 使用如下指令构建 x86 版本的内核模块。
 
    ```shell
-   $ cargo build
+   $ cargo build --bin canicula-kernel --target x86_64-unknown-none
    ```
 
 ### x86-64

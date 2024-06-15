@@ -10,11 +10,11 @@
 
 ```shell
 # 构建 x86 架构内核
-$ cargo build --target x86_64-unknown-none
+$ cargo build --bin canicula-kernel --target x86_64-unknown-none
 # 构建 AArch 64 架构内核
-$ cargo build --target aarch64-unknown-none
+$ cargo build --bin canicula-kernel --target aarch64-unknown-none
 # 构建 RISC-V 架构内核
-$ cargo build --target riscv64gc-unknown-none-elf
+$ cargo build --bin canicula-kernel --target riscv64gc-unknown-none-elf
 # 构建 x86 EFI 文件
 $ cargo build --bin canicula-efi --target x86_64-unknown-uefi
 # 构建 AArch 64 EFI 文件
