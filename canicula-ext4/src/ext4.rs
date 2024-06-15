@@ -13,7 +13,7 @@ mod types;
 const GROUP_ZERO_PADDING: usize = 1024;
 
 #[allow(unused)]
-struct Ext4FS<const SIZE: usize> {
+pub struct Ext4FS<const SIZE: usize> {
     read_byte: fn(usize) -> Result<u8, OperateError>,
     write_byte: fn(u8, usize) -> Result<usize, OperateError>,
     super_block: Option<SuperBlock>,
@@ -71,5 +71,28 @@ impl<const SIZE: usize> Ext4FS<SIZE> {
             write_byte,
             super_block: Some(unsafe { super_block.assume_init() }),
         }
+    }
+}
+
+#[test]
+mod test {
+    #[test]
+    fn test() {
+        use canicula_common::fs::OperateError;
+        use canicula_ext4::Ext4FS;
+
+        let read_byte = |offset: usize| -> Result<u8, OperateError> {
+            // Implement your read_byte function here
+            Ok(0)
+        };
+
+        let write_byte = |byte: u8, offset: usize| -> Result<usize, OperateError> {
+            // Implement your write_byte function here
+            Ok(1)
+        };
+
+        let fs: Ext4FS<1024> = Ext4FS::new(read_byte, write_byte);
+
+        println!("Hello, world!");
     }
 }

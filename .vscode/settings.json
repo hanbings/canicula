@@ -1,7 +1,7 @@
 {
-    "rust-analyzer.cargo.target": "x86_64-unknown-none",
+    "rust-analyzer.cargo.target": "x86_64-unknown-linux-gnu",
     "rust-analyzer.checkOnSave.allTargets": false,
-    "rust-analyzer.checkOnSave.target": "x86_64-unknown-none",
+    "rust-analyzer.checkOnSave.target": "x86_64-unknown-linux-gnu",
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml",
         "./canicula-common/Cargo.toml",
@@ -9,6 +9,7 @@
         "./canicula-ext4/Cargo.toml",
         "./canicula-kernel/Cargo.toml",
         "./canicula-libs/Cargo.toml",
+        "./tests/Cargo.toml",
     ],
     "cSpell.words": [
         "rustc",

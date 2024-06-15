@@ -5,6 +5,6 @@ edition = "2021"
 
 [lib]
 name = "canicula_common"
-path = "src/common.rs"
+path = "src/libs.rs"
 
 [dependencies]

@@ -9,8 +9,8 @@
 ## 🔨 快速构建
 
 ```shell
-# 默认构建 x86 架构内核
-$ cargo build
+# 构建 x86 架构内核
+$ cargo build --target x86_64-unknown-none
 # 构建 AArch 64 架构内核
 $ cargo build --target aarch64-unknown-none
 # 构建 RISC-V 架构内核

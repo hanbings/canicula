@@ -10,8 +10,8 @@ members = [
 
 [profile.release]
 debug = true
-panic = "abort"
+panic = "unwind"
 
 [profile.dev]
 debug = true
-panic = "abort"
+panic = "unwind"
