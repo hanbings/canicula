@@ -9,7 +9,6 @@
         "./canicula-ext4/Cargo.toml",
         "./canicula-kernel/Cargo.toml",
         "./canicula-libs/Cargo.toml",
-        "./tests/Cargo.toml",
     ],
     "cSpell.words": [
         "rustc",
