@@ -1,4 +1,4 @@
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 #![no_main]
 
 extern crate alloc;
@@ -8,6 +8,7 @@ use canicula_common::fs::OperateError;
 use core::mem::MaybeUninit;
 use types::super_block::SuperBlock;
 
+mod tests;
 mod types;
 
 const GROUP_ZERO_PADDING: usize = 1024;
@@ -71,28 +72,5 @@ impl<const SIZE: usize> Ext4FS<SIZE> {
             write_byte,
             super_block: Some(unsafe { super_block.assume_init() }),
         }
-    }
-}
-
-#[test]
-mod test {
-    #[test]
-    fn test() {
-        use canicula_common::fs::OperateError;
-        use canicula_ext4::Ext4FS;
-
-        let read_byte = |offset: usize| -> Result<u8, OperateError> {
-            // Implement your read_byte function here
-            Ok(0)
-        };
-
-        let write_byte = |byte: u8, offset: usize| -> Result<usize, OperateError> {
-            // Implement your write_byte function here
-            Ok(1)
-        };
-
-        let fs: Ext4FS<1024> = Ext4FS::new(read_byte, write_byte);
-
-        println!("Hello, world!");
     }
 }

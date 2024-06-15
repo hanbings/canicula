@@ -10,5 +10,5 @@ $ cargo build --bin canicula-ext4 --target x86_64-unknown-none
 $ cargo build --bin canicula-ext4 --target aarch64-unknown-none
 $ cargo build --bin canicula-ext4 --target riscv64gc-unknown-none-elf
 # 运行测试
-$ cargo test --target x86_64-unknown-linux-gnu
+$ cargo test --target x86_64-unknown-linux-gnu -Z build-std=std -- --show-output
 ```
