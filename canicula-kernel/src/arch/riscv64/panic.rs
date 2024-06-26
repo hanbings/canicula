@@ -11,10 +11,10 @@ fn panic(info: &PanicInfo) -> ! {
             "Panicked at {}:{} {}",
             location.file(),
             location.line(),
-            info.message().unwrap()
+            info.message()
         );
     } else {
-        println!("Panicked: {}", info.message().unwrap());
+        println!("Panicked: {}", info.message());
     }
 
     shutdown(true);
