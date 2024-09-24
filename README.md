@@ -47,6 +47,8 @@ $ cargo build --bin canicula-efi --target aarch-unknown-uefi
 
 [8 - 显存映射与图形化（WIP）](docs/graphics.md)
 
+[Ext - 处理器架构](docs/architecture.md)
+
 [Ext - 模块化设计（WIP）](docs/design.md)
 
 [Ext - Ext4 文件系统（WIP）](docs/ext4.md)

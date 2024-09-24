@@ -1,3 +1,5 @@
+[toc]
+
 # Ext4
 
 参考：[Ext4](https://ext4.wiki.kernel.org/index.php/Main_Page)

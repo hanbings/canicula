@@ -1,3 +1,5 @@
+[toc]
+
 # 基本开发环境
 
 _本文基于 [Debian 发行版](https://www.debian.org/)，如果使用其他发行版可能需要自行补齐依赖。_
@@ -45,7 +47,13 @@ _本文基于 [Debian 发行版](https://www.debian.org/)，如果使用其他�
 
 ## 配置项目环境
 
-1. 安装 Rust 工具链
+1. 安装 Rust
+
+   ```shell
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   ```
+
+2. 安装 Rust 工具链
 
    ```shell
    $ rustup default nightly
@@ -60,7 +68,7 @@ _本文基于 [Debian 发行版](https://www.debian.org/)，如果使用其他�
    $ rustup component add llvm-tools-preview
    ```
 
-2. 使用如下指令构建 x86 版本的内核模块。
+3. 使用如下指令构建 x86 版本的内核模块。
 
    ```shell
    $ cargo build --bin canicula-kernel --target x86_64-unknown-none
