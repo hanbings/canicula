@@ -10,10 +10,10 @@
 - [引导](#引导)
   - [UEFI](#uefi)
     - [uefi-rs](#uefi-rs)
-    - [**数据类型**](#数据类型)
+    - [数据类型](#数据类型)
     - [**修饰符**](#修饰符)
-    - [**入口函数**](#入口函数)
-    - [**调用函数**](#调用函数)
+    - [入口函数](#入口函数)
+    - [调用函数](#调用函数)
     - [调用样例](#调用样例)
   - [x86-64](#x86-64)
   - [AArch64](#aarch64)
@@ -42,7 +42,7 @@ UEFI（Unified Extensible Firmware Interface），统一可扩展固件接口，
 
 现有大多数的 UEFI 编程资料是基于 C 语言的，使用了很多指针特性来实现功能。在 Rust 中我们有更好的写法抽象和隐藏或安全传递这些指针，因此这里的主要目的是记录 C 语言的写法与 Rust 写法的异同，以便应对阅读参考资料代码时的语言障碍。（如果您有 C / C++ 基础且掌握 Rust 语言那就更好了！）
 
-### **数据类型**
+### 数据类型
 
 从数据类型说起：
 
@@ -86,7 +86,7 @@ UEFI（Unified Extensible Firmware Interface），统一可扩展固件接口，
 | *CONST*      | Datum is read-only.                                          |
 | *EFIAPI*     | Defines the calling convention for UEFI interfaces.          |
 
-### **入口函数**
+### 入口函数
 
 **EDK2：**
 
@@ -107,7 +107,7 @@ fn main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status { }
 
 在入口中 Image Handle 指向当前 Image（其实也就是当前 EFI 程序），System Table 是一个 UEFI 环境下的全局资源表，存有一些公共数据和函数。
 
-### **调用函数**
+### 调用函数
 
 一般来说，在 EDK2 中函数的返回值为 EFI*STATUS 类型，（返回的）数据地址会赋值给参数类型为指针的 _OUT* 参数中，这意味着调用一个函数的步骤是：
 
