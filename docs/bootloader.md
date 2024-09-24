@@ -5,7 +5,20 @@
 > - [uefi-rs 变更日志](https://github.com/rust-osdev/uefi-rs/blob/main/uefi/CHANGELOG.md#uefi---0320-2024-09-09)
 > - [上一个版本的文档](bootloader.old.md)
 
-[toc]
+# 目录
+- [目录](#目录)
+- [引导](#引导)
+  - [UEFI](#uefi)
+    - [uefi-rs](#uefi-rs)
+    - [**数据类型**](#数据类型)
+    - [**修饰符**](#修饰符)
+    - [**入口函数**](#入口函数)
+    - [**调用函数**](#调用函数)
+    - [调用样例](#调用样例)
+  - [x86-64](#x86-64)
+  - [AArch64](#aarch64)
+  - [RISC-V](#risc-v)
+
 
 # 引导
 
