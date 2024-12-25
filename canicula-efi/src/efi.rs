@@ -3,6 +3,7 @@
 
 mod config;
 
+use boot::{AllocateType, MemoryType};
 use log::info;
 use uefi::{
     prelude::*,
@@ -10,7 +11,6 @@ use uefi::{
         file::{File, FileAttribute, FileInfo, FileMode, FileType},
         fs::SimpleFileSystem,
     },
-    table::boot::{AllocateType, MemoryType},
     CStr16,
 };
 use xmas_elf::ElfFile;
@@ -18,25 +18,21 @@ use xmas_elf::ElfFile;
 use crate::config::x86_64::{FILE_BUFFER_SIZE, KERNEL_PATH, PAGE_SIZE};
 
 #[entry]
-fn main(_image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
-    uefi::helpers::init(&mut system_table).unwrap();
+fn main() -> Status {
+    uefi::helpers::init().unwrap();
     info!("Canicula: Starting the UEFI bootloader...");
     info!(
         "config: file_buffer_size = {}, page_size = {}, kernel_path = {}",
         FILE_BUFFER_SIZE, PAGE_SIZE, KERNEL_PATH
     );
 
-    // load boot table
-    let boot_services = system_table.boot_services();
-
     // load simple file system protocol
-    let simple_file_system_handle = boot_services
-        .get_handle_for_protocol::<SimpleFileSystem>()
+    let simple_file_system_handle = uefi::boot::get_handle_for_protocol::<SimpleFileSystem>()
         .expect("Cannot get protocol handle");
 
-    let mut simple_file_system_protocol = boot_services
-        .open_protocol_exclusive::<SimpleFileSystem>(simple_file_system_handle)
-        .expect("Cannot get simple file system protocol");
+    let mut simple_file_system_protocol =
+        uefi::boot::open_protocol_exclusive::<SimpleFileSystem>(simple_file_system_handle)
+            .expect("Cannot get simple file system protocol");
 
     // open volume
     let mut root = simple_file_system_protocol
@@ -67,13 +63,14 @@ fn main(_image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
     info!("Kernel file size: {:?}", kernel_file_size);
 
     // load kernel file into memory
-    let kernel_file_address = boot_services
-        .allocate_pages(
-            AllocateType::AnyPages,
-            MemoryType::LOADER_DATA,
-            kernel_file_size / PAGE_SIZE + 1,
-        )
-        .expect("Cannot allocate memory in the RAM!") as *mut u8;
+    let mut kernel_file_address = uefi::boot::allocate_pages(
+        AllocateType::AnyPages,
+        MemoryType::LOADER_DATA,
+        kernel_file_size / PAGE_SIZE + 1,
+    )
+    .expect("Cannot allocate memory in the RAM!");
+
+    let kernel_file_address = unsafe { kernel_file_address.as_mut() as *mut u8 };
 
     let kernel_file_in_memory = unsafe {
         core::ptr::write_bytes(kernel_file_address, 0, kernel_file_size);
@@ -100,6 +97,6 @@ fn main(_image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
         core::arch::asm!("jmp {}", in(reg) kernel_entry_address);
     }
 
-    boot_services.stall(10_000_000);
+    uefi::boot::stall(10_000_000);
     Status::SUCCESS
 }
