@@ -28,8 +28,10 @@ version = "0.1.0"
 name = "canicula-efi"
 version = "0.1.0"
 dependencies = [
+ "canicula-common",
  "log",
  "uefi",
+ "x86_64",
  "xmas-elf",
 ]
 
@@ -45,6 +47,7 @@ name = "canicula-kernel"
 version = "0.1.0"
 dependencies = [
  "bootloader_api",
+ "canicula-common",
  "lazy_static",
  "log",
  "riscv",
@@ -135,6 +138,12 @@ dependencies = [
  "critical-section",
  "embedded-hal",
 ]
+
+[[package]]
+name = "rustversion"
+version = "1.0.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7c45b9784283f1b2e7fb61b42047c2fd678ef0960d4f6f1eba131594cc369d4"
 
 [[package]]
 name = "sbi-rt"
@@ -237,6 +246,24 @@ name = "unicode-ident"
 version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
+
+[[package]]
+name = "volatile"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "442887c63f2c839b346c192d047a7c87e73d0689c9157b00b53dcc27dd5ea793"
+
+[[package]]
+name = "x86_64"
+version = "0.15.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f042214de98141e9c8706e8192b73f56494087cc55ebec28ce10f26c5c364ae"
+dependencies = [
+ "bit_field",
+ "bitflags",
+ "rustversion",
+ "volatile",
+]
 
 [[package]]
 name = "xmas-elf"

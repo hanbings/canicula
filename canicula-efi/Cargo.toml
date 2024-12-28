@@ -9,5 +9,8 @@ path = "src/efi.rs"
 
 [dependencies]
 log = "0.4"
+x86_64 = "0.15.2"
 xmas-elf = "0.9.1"
 uefi = { version = "0.33.0", features = ["logger", "panic_handler"] }
+
+canicula-common = { path = "../canicula-common" }

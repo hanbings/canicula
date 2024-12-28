@@ -4,6 +4,7 @@
 mod config;
 
 use boot::{AllocateType, MemoryType};
+use config::x86_64::KERNEL_STACK_SIZE;
 use log::info;
 use uefi::{
     prelude::*,
@@ -15,15 +16,21 @@ use uefi::{
 };
 use xmas_elf::ElfFile;
 
-use crate::config::x86_64::{FILE_BUFFER_SIZE, KERNEL_PATH, PAGE_SIZE};
+use crate::config::x86_64::{FILE_BUFFER_SIZE, KERNEL_PATH, KERNEL_STACK_ADDRESS, PAGE_SIZE};
 
 #[entry]
 fn main() -> Status {
     uefi::helpers::init().unwrap();
     info!("Canicula: Starting the UEFI bootloader...");
     info!(
-        "config: file_buffer_size = {}, page_size = {}, kernel_path = {}",
-        FILE_BUFFER_SIZE, PAGE_SIZE, KERNEL_PATH
+        "
+        config: file_buffer_size = {}, 
+        page_size = {}, 
+        kernel_path = {}, 
+        kernel_stack_address = {:#X}, 
+        kernel_stack_size = {:#X}
+        ",
+        FILE_BUFFER_SIZE, PAGE_SIZE, KERNEL_PATH, KERNEL_STACK_ADDRESS, KERNEL_STACK_SIZE
     );
 
     // load simple file system protocol
@@ -88,7 +95,6 @@ fn main() -> Status {
     // parsing kernel elf
     let kernel_elf = ElfFile::new(kernel_content).expect("Not a valid ELF file.");
     let kernel_entry_offset = kernel_elf.header.pt2.entry_point() as usize;
-
     let kernel_entry_address = kernel_address + kernel_entry_offset;
 
     // jmp to kernel
