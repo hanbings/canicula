@@ -1,6 +1,8 @@
 #![no_std]
 #![no_main]
 
+use core::arch::asm;
+
 mod arch;
 
 #[no_mangle]
@@ -15,9 +17,17 @@ pub fn kernel() -> ! {
     arch::aarch::entry();
 }
 
-/// This is the entry point for the x86-64 (UEFI) kernel.
 #[no_mangle]
-#[cfg(target_arch = "x86_64")]
-pub extern "C" fn kernel() -> ! {
-    arch::x86::entry();
+pub extern "C" fn _start() -> ! {
+    loop {
+        hlt();
+    }
+}
+
+/// hlt 指令的封装
+#[inline(always)]
+fn hlt() {
+    unsafe {
+        asm!("hlt", options(nomem, nostack, preserves_flags));
+    }
 }
