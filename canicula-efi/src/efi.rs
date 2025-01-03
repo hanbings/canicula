@@ -5,6 +5,7 @@ extern crate alloc;
 
 use log::{debug, info};
 use uefi::boot::{AllocateType, MemoryType};
+use uefi::proto::console::gop::GraphicsOutput;
 use uefi::proto::media::file::File;
 use uefi::proto::media::file::{FileAttribute, FileInfo, FileMode, FileType};
 use uefi::proto::media::fs::SimpleFileSystem;
@@ -38,6 +39,11 @@ unsafe impl FrameAllocator<Size4KiB> for UEFIFrameAllocator {
             address.as_ptr() as u64,
         )))
     }
+}
+
+struct GraphicInfo {
+    frame_buffer_addr: u64,
+    frame_buffer_size: u64,
 }
 
 #[entry]
@@ -170,10 +176,30 @@ fn main() -> Status {
         Cr0::update(|f| f.insert(Cr0Flags::WRITE_PROTECT));
     }
 
-    info!("Stalling for 10 seconds...");
-    boot::stall(10_000_000);
+    // init display
+    let gop_handler = uefi::boot::get_handle_for_protocol::<GraphicsOutput>()
+        .expect("failed to get GraphicsOutput");
+    let mut gop = uefi::boot::open_protocol_exclusive::<GraphicsOutput>(gop_handler)
+        .expect("failed to open GraphicsOutput");
 
-    Status::SUCCESS
+    let graphic_info = GraphicInfo {
+        frame_buffer_addr: gop.frame_buffer().as_mut_ptr() as u64,
+        frame_buffer_size: gop.frame_buffer().size() as u64,
+    };
+
+    // exit boot services
+    info!("exit boot services");
+    let _memory_map;
+    unsafe {
+        _memory_map = uefi::boot::exit_boot_services(MemoryType::BOOT_SERVICES_DATA);
+    }
+
+    unsafe {
+        core::arch::asm!("mov rsp, {stack}", stack = in(reg) KERNEL_STACK_ADDRESS);
+        core::arch::asm!("mov rbp, rsp");
+        core::arch::asm!("mov rdi, {graphic_info}", graphic_info = in(reg) &graphic_info);
+        core::arch::asm!("jmp {kernel}", kernel = in(reg) kernel_entry_point, options(noreturn));
+    }
 }
 
 pub fn map_stack(

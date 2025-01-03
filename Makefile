@@ -6,7 +6,7 @@ efi:
 	cp target/x86_64-unknown-uefi/debug/canicula-efi.efi esp/efi/boot/bootx64.efi
 
 kernel:
-	RUSTFLAGS="-C link-arg=-Tcanicula-kernel/x86-kernel.ld" cargo build --bin canicula-kernel --target x86_64-unknown-none
+	cargo build --bin canicula-kernel --target canicula-kernel/x86_64-unknown-none.json
 	mkdir -p esp
 	cp target/x86_64-unknown-none/debug/canicula-kernel esp/canicula-kernel
 

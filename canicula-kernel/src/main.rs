@@ -1,8 +1,6 @@
 #![no_std]
 #![no_main]
 
-use core::arch::asm;
-
 mod arch;
 
 #[no_mangle]
@@ -18,16 +16,6 @@ pub fn kernel() -> ! {
 }
 
 #[no_mangle]
-pub extern "C" fn _start() -> ! {
-    loop {
-        hlt();
-    }
-}
-
-/// hlt 指令的封装
-#[inline(always)]
-fn hlt() {
-    unsafe {
-        asm!("hlt", options(nomem, nostack, preserves_flags));
-    }
+pub extern "C" fn kernel() -> ! {
+    arch::x86::entry();
 }

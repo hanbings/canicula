@@ -1,4 +1,4 @@
-ENTRY(_start)
+ENTRY(kernel)
 
 KERNEL_BEGIN = 0xfffff80000000000;
 
