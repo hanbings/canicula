@@ -6,3 +6,7 @@
 
 # This file is the rustsbi startup image of qemu and needs to be downloaded by the user.
 rustsbi-qemu.bin
+
+# GDB Files
+.gdb_history
+.gdbinit

@@ -1,3 +1,26 @@
+OS := $(shell uname)
+DISTRO := $(shell cat /etc/*release | grep '^ID=' | cut -d '=' -f2)
+
+OVMF_CODE_PATH := /usr/share/OVMF/OVMF_CODE.fd
+OVMF_VARS_PATH := /usr/share/OVMF/OVMF_VARS.fd
+
+ifeq ($(OS),Linux)
+    ifeq ($(DISTRO),arch)
+		OVMF_CODE_PATH := /usr/share/OVMF/x64/OVMF_CODE.4m.fd
+	    OVMF_VARS_PATH := /usr/share/OVMF/x64/OVMF_VARS.4m.fd
+	endif
+
+	ifeq ($(DISTRO),debian)
+		OVMF_CODE_PATH := /usr/share/OVMF/OVMF_CODE_4M.fd
+	    OVMF_VARS_PATH := /usr/share/OVMF/OVMF_VARS_4M.fd
+	endif
+endif
+
+$(info OS=$(OS))
+$(info DISTRO=$(DISTRO))
+$(info OVMF_CODE_PATH=$(OVMF_CODE_PATH))
+$(info OVMF_VARS_PATH=$(OVMF_VARS_PATH))
+
 all: efi kernel
 
 efi:
@@ -18,10 +41,14 @@ clean-esp:
 	rm -rf esp
 
 qemu:
-	qemu-system-x86_64 -enable-kvm -nographic \
-       -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE.fd \
-       -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_VARS.fd \
-       -drive format=raw,file=fat:rw:esp
+	qemu-system-x86_64 \
+		-m 256 \
+	    -enable-kvm \
+		-nographic \
+		-s -S \
+        -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \
+        -drive if=pflash,format=raw,readonly=on,file=$(OVMF_VARS_PATH) \
+        -drive format=raw,file=fat:rw:esp
 
 kill-qemu:
 	pgrep qemu | xargs kill -9
