@@ -1,11 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "canicula-common",
     "canicula-efi",
-    "canicula-ext4",
-    "canicula-kernel",
-    "canicula-libs",
 ]
 
 [profile.release]
