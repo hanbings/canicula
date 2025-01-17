@@ -15,9 +15,7 @@ pub fn kernel() -> ! {
     arch::aarch::entry();
 }
 
-/// This is the entry point for the x86-64 (UEFI) kernel.
 #[no_mangle]
-#[cfg(target_arch = "x86_64")]
 pub extern "C" fn kernel() -> ! {
     arch::x86::entry();
 }
