@@ -23,11 +23,18 @@ $ cargo build --bin canicula-efi --target x86_64-unknown-uefi
 $ cargo build --bin canicula-efi --target aarch-unknown-uefi
 ```
 
-## 📦 博客
+## 📦 博客 / 文档
 
 > [!WARNING]
 > 本人还并不是很熟悉 Rust 语言并且这份文档只是作为学习操作系统的知识的记录，还会存在很多错误的地方，仅供参考。
 > 还请多多指教！
+
+> [!NOTE]
+> Blog 主要为补充性内容，用于补充文档中的前置知识。
+> 数字序号部分是主要的文档，用于描述一个内核中应该有的功能。
+> Ext 部分补充 “教学” 内核之外的扩展性内容。
+
+[Blog - Rust：使用 uefi-rs 编写一个 UEFI 应用并加载内核](https://blog.hanbings.io/posts/rust-uefi-bootloader/)
 
 [0 - 基本开发环境](docs/dev-environment.md)
 
@@ -52,3 +59,4 @@ $ cargo build --bin canicula-efi --target aarch-unknown-uefi
 [Ext - 模块化设计（WIP）](docs/design.md)
 
 [Ext - Ext4 文件系统（WIP）](docs/ext4.md)
+
