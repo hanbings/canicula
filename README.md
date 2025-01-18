@@ -60,3 +60,10 @@ $ cargo build --bin canicula-efi --target aarch-unknown-uefi
 
 [Ext - Ext4 文件系统（WIP）](docs/ext4.md)
 
+**引用名称说明**
+
+| 手册                                                         | 原始链接                                                     | 文中引用名称 |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------ |
+| Intel® 64 and IA-32 Architectures Software Developer’s Manual Combined Volumes: 1, 2A, 2B, 2C, 2D, 3A, 3B, 3C, 3D, and 4 (Order Number: 253665-086US December 2024) | https://cdrdv2-public.intel.com/843820/325462-sdm-vol-1-2abcd-3abcd-4-1.pdf | Intel 手册   |
+| AMD64 Architecture Programmer’s Manual Volumes 1–5 (Publication No. 40332 Revision 4.08 Date April 2024) | https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/programmer-references/40332.pdf | AMD 手册     |
+| Unified Extensible Firmware Interface (UEFI) Specification Release 2.11 (Nov 21, 2024) | https://uefi.org/sites/default/files/resources/UEFI_Spec_Final_2.11.pdf | UEFI Spec    |
