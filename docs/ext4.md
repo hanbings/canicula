@@ -12,9 +12,10 @@
 
 ```shell
 # 对不同架构进行编译
-$ cargo build --bin canicula-ext4 --target x86_64-unknown-none
-$ cargo build --bin canicula-ext4 --target aarch64-unknown-none
-$ cargo build --bin canicula-ext4 --target riscv64gc-unknown-none-elf
+$ cd canicula-ext4
+$ cargo build --target x86_64-unknown-none
+$ cargo build --target aarch64-unknown-none
+$ cargo build --target riscv64gc-unknown-none-elf
 # 运行测试
 $ cargo test --target x86_64-unknown-linux-gnu -Z build-std=std -- --show-output
 ```
