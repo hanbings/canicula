@@ -16,6 +16,18 @@ pub fn kernel() -> ! {
 }
 
 #[no_mangle]
-pub extern "C" fn kernel() -> ! {
-    arch::x86::entry();
+pub extern "C" fn kernel(frame_buffer_addr: u64, frame_buffer_size: u64) -> ! {
+    unsafe {
+        core::arch::asm!("mov rcx, 0x12345678");
+    }
+
+    let frame_buffer_ptr = frame_buffer_addr as *mut u64;
+
+    for i in 0..frame_buffer_size {
+        unsafe {
+            *frame_buffer_ptr.add(i as usize) = 0xff408deb;
+        }
+    }
+
+    loop {}
 }

@@ -40,19 +40,23 @@ $ cargo build --bin canicula-efi --target aarch-unknown-uefi
 
 [1 - 引导](docs/bootloader.md)
 
-[2 - 内存管理（WIP）](docs/mm.md)
+[2 - 段、分段、分页与页表（WIP）](docs/paging.md)
 
-[3 - 进程调度（WIP）](docs/process.md)
+[3 - 中断与异常处理（WIP）](docs/exceptions-and-interrupts.md)
 
-[4 - 文件系统（WIP）](bdocs/fs.md)
+[4 - 内存管理（WIP）](docs/mm.md)
 
-[5 - 线程、线程通信（WIP）](docs/thread.md)
+[5 - 进程调度（WIP）](docs/process.md)
 
-[6 - 多核（WIP）](docs/muilt-core.md)
+[6 - 文件系统（WIP）](bdocs/fs.md)
 
-[7 - 外部接口：USB、网卡与显卡（WIP）](docs/extend-interface.md)
+[7 - 线程、线程通信（WIP）](docs/thread.md)
 
-[8 - 显存映射与图形化（WIP）](docs/graphics.md)
+[8 - 多核（WIP）](docs/muilt-core.md)
+
+[9 - 外部接口：USB、网卡与显卡（WIP）](docs/extend-interface.md)
+
+[10 - 显存映射与图形化（WIP）](docs/graphics.md)
 
 [Ext - 处理器架构](docs/architecture.md)
 
