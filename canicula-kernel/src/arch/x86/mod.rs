@@ -1,17 +1,4 @@
-use core::{arch::asm, panic::PanicInfo};
-
-pub fn entry() -> ! {
-    loop {
-        hlt();
-    }
-}
-
-#[inline(always)]
-fn hlt() {
-    unsafe {
-        asm!("hlt", options(nomem, nostack, preserves_flags));
-    }
-}
+use core::panic::PanicInfo;
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
