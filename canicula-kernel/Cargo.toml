@@ -8,10 +8,9 @@ name = "canicula-kernel"
 path = "src/main.rs"
 
 [dependencies]
+bootloader_api = "0.11.8"
 
 [target.x86_64-unknown-none.dependencies]
-bootloader_api = "0.11.7"
-canicula-common = { path = "../canicula-common" }
 
 [target.aarch64-unknown-none.dependencies]
 

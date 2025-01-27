@@ -15,17 +15,23 @@ pub fn kernel() -> ! {
     arch::aarch::entry();
 }
 
-#[no_mangle]
-pub extern "C" fn kernel(frame_buffer_addr: u64, frame_buffer_size: u64) -> ! {
-    unsafe {
-        core::arch::asm!("mov rcx, 0x12345678");
-    }
+const CONFIG: bootloader_api::BootloaderConfig = {
+    let mut config = bootloader_api::BootloaderConfig::new_default();
+    config.kernel_stack_size = 100 * 1024;
+    config
+};
+bootloader_api::entry_point!(kernel_main, config = &CONFIG);
 
-    let frame_buffer_ptr = frame_buffer_addr as *mut u64;
+fn kernel_main(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
+    let frame_buffer = boot_info.framebuffer.as_mut().unwrap();
 
-    for i in 0..frame_buffer_size {
+    let buffer = frame_buffer.buffer_mut().as_ptr() as *mut u32;
+    let width = frame_buffer.info().width;
+    let height = frame_buffer.info().height;
+
+    for index in 0..(width * height) {
         unsafe {
-            *frame_buffer_ptr.add(i as usize) = 0xff408deb;
+            buffer.add(index as usize).write(0xff408deb);
         }
     }
 
