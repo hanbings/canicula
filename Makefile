@@ -27,9 +27,10 @@ efi:
 	cargo build --bin canicula-efi --target x86_64-unknown-uefi
 	mkdir -p esp/efi/boot/
 	cp target/x86_64-unknown-uefi/debug/canicula-efi.efi esp/efi/boot/bootx64.efi
+	cp rboot.conf esp/efi/boot/rboot.conf
 
 kernel:
-	cargo build --bin canicula-kernel --target canicula-kernel/x86_64-unknown-none.json
+	cargo build --bin canicula-kernel --target x86_64-unknown-none.json -Z build-std=core,alloc,compiler_builtins -Zbuild-std-features=compiler-builtins-mem
 	mkdir -p esp
 	cp target/x86_64-unknown-none/debug/canicula-kernel esp/canicula-kernel
 
@@ -43,9 +44,7 @@ clean-esp:
 qemu:
 	qemu-system-x86_64 \
 		-m 256 \
-	    -enable-kvm \
-		-nographic \
-		-s -S \
+		-enable-kvm \
         -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \
         -drive if=pflash,format=raw,readonly=on,file=$(OVMF_VARS_PATH) \
         -drive format=raw,file=fat:rw:esp
