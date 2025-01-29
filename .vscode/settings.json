@@ -1,0 +1,14 @@
+{
+    "rust-analyzer.cargo.target": "x86_64-unknown-linux-gnu",
+    "rust-analyzer.checkOnSave.allTargets": true,
+    "rust-analyzer.checkOnSave.target": "x86_64-unknown-linux-gnu",
+    "rust-analyzer.linkedProjects": [
+        "./Cargo.toml",
+        "./canicula-efi/Cargo.toml",
+        "./canicula-kernel/Cargo.toml",
+    ],
+    "rust-analyzer.runnables.extraArgs": [
+        "--target=x86_64-unknown-linux-gnu",
+        "-Zbuild-std=std,panic_abort",
+    ],
+}
