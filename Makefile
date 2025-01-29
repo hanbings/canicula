@@ -24,9 +24,8 @@ $(info OVMF_VARS_PATH=$(OVMF_VARS_PATH))
 all: efi kernel
 
 efi:
-	cargo build --bin bootloader-x86_64-uefi --target x86_64-unknown-uefi
 	mkdir -p esp/efi/boot/
-	cp /home/hanbings/Github/canicula/target/x86_64-unknown-uefi/debug/bootloader-x86_64-uefi.efi esp/efi/boot/bootx64.efi
+	cp bootloader/target/x86_64-unknown-uefi/release/bootloader-x86_64-uefi.efi esp/efi/boot/bootx64.efi
 
 kernel:
 	cargo build --bin canicula-kernel --target x86_64-unknown-none
