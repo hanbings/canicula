@@ -4,7 +4,7 @@
 
 ## ⭐ Canicula OS
 
-本分支为尝试以 [rust-osdev/bootloader](https://github.com/rust-osdev/bootloader) （使用了 fork 版本 [hanbings/bootloader](https://github.com/hanbings/bootloader) ）作为基本引导器的测试代码。
+本分支尝试以 [rust-osdev/bootloader](https://github.com/rust-osdev/bootloader) 作为基本引导器
 
 ### 编译运行
 
