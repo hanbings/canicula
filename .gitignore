@@ -10,3 +10,5 @@ rustsbi-qemu.bin
 # GDB Files
 .gdb_history
 .gdbinit
+
+.tasks

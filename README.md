@@ -10,6 +10,7 @@
 
 ```bash
 git submodule init
+git submodule update
 cd bootloader/uefi
 cargo build --target x86_64-unknown-uefi --release -Zbuild-std=core -Zbuild-std-features=compiler-builtins-mem
 cd ../..
