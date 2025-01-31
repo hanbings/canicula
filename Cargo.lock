@@ -56,15 +56,15 @@ dependencies = [
  "bootloader_api 0.11.8",
  "conquer-once",
  "log",
- "noto-sans-mono-bitmap",
+ "noto-sans-mono-bitmap 0.2.0",
  "rand",
  "rand_hc",
  "raw-cpuid",
  "spinning_top",
  "uart_16550",
  "usize_conversions",
- "x86_64 0.14.13",
- "xmas-elf 0.8.0",
+ "x86_64",
+ "xmas-elf",
 ]
 
 [[package]]
@@ -77,7 +77,7 @@ dependencies = [
  "log",
  "serde-json-core",
  "uefi 0.20.0",
- "x86_64 0.14.13",
+ "x86_64",
 ]
 
 [[package]]
@@ -108,17 +108,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "canicula-efi"
-version = "0.1.0"
-dependencies = [
- "canicula-common",
- "log",
- "uefi 0.33.0",
- "x86_64 0.15.2",
- "xmas-elf 0.9.1",
-]
-
-[[package]]
 name = "canicula-ext4"
 version = "0.1.0"
 dependencies = [
@@ -130,6 +119,7 @@ name = "canicula-kernel"
 version = "0.1.0"
 dependencies = [
  "bootloader_api 0.11.9",
+ "noto-sans-mono-bitmap 0.3.1",
  "riscv",
  "sbi-rt",
 ]
@@ -231,6 +221,12 @@ name = "noto-sans-mono-bitmap"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a27daf9557165efe1d09b52f97393bf6283cadb0a76fbe64a1061e15553a994a"
+
+[[package]]
+name = "noto-sans-mono-bitmap"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1064d564ae026ae123bf5d607318b42a5b31d70a3c48e6ea7ee44cce4cdb095e"
 
 [[package]]
 name = "ppv-lite86"
@@ -470,7 +466,7 @@ checksum = "614ff2a87880d4bd4374722268598a970bbad05ced8bf630439417347254ab2e"
 dependencies = [
  "bitflags 1.3.2",
  "rustversion",
- "x86_64 0.14.13",
+ "x86_64",
 ]
 
 [[package]]
@@ -507,23 +503,7 @@ dependencies = [
  "ptr_meta",
  "ucs2",
  "uefi-macros 0.13.0",
- "uefi-raw 0.5.2",
- "uguid",
-]
-
-[[package]]
-name = "uefi"
-version = "0.33.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6679b7fc2f6d6d2ea2f67555ef3ed9d71d30c5021faf9193091a5192db7dc468"
-dependencies = [
- "bitflags 2.5.0",
- "cfg-if",
- "log",
- "ptr_meta",
- "ucs2",
- "uefi-macros 0.17.0",
- "uefi-raw 0.9.0",
+ "uefi-raw",
  "uguid",
 ]
 
@@ -550,32 +530,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "uefi-macros"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b24e77d3fc1e617051e630f99da24bcae6328abab37b8f9216bb68d06804f9a"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.64",
-]
-
-[[package]]
 name = "uefi-raw"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "efa8716f52e8cab8bcedfd5052388a0f263b69fe5cc2561548dc6a530678333c"
-dependencies = [
- "bitflags 2.5.0",
- "ptr_meta",
- "uguid",
-]
-
-[[package]]
-name = "uefi-raw"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f6d465de2c918779dafb769a5a4fe8d6e4fb7cc4cc6cb1a735f2f6ec68beea4"
 dependencies = [
  "bitflags 2.5.0",
  "ptr_meta",
@@ -625,31 +583,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "x86_64"
-version = "0.15.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f042214de98141e9c8706e8192b73f56494087cc55ebec28ce10f26c5c364ae"
-dependencies = [
- "bit_field",
- "bitflags 2.5.0",
- "rustversion",
- "volatile",
-]
-
-[[package]]
 name = "xmas-elf"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d29b4d8e7beaceb4e77447ba941a7600d23d0319ab52da0461abea214832d5a"
-dependencies = [
- "zero",
-]
-
-[[package]]
-name = "xmas-elf"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42c49817e78342f7f30a181573d82ff55b88a35f86ccaf07fc64b3008f56d1c6"
 dependencies = [
  "zero",
 ]

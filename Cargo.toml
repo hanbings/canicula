@@ -7,7 +7,6 @@ members = [
     "bootloader/common/config",
 
     "canicula-common",
-    "canicula-efi",
     "canicula-ext4",
     "canicula-kernel",
     "canicula-libs",
