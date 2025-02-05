@@ -44,8 +44,6 @@ qemu:
 	qemu-system-x86_64 \
 		-m 256 \
 	    -enable-kvm \
-		-nographic \
-		-s -S \
         -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \
         -drive if=pflash,format=raw,readonly=on,file=$(OVMF_VARS_PATH) \
         -drive format=raw,file=fat:rw:esp
