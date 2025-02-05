@@ -24,6 +24,7 @@ $(info OVMF_VARS_PATH=$(OVMF_VARS_PATH))
 all: efi kernel
 
 efi:
+	cd bootloader/uefi && cargo build --target x86_64-unknown-uefi --release -Zbuild-std=core -Zbuild-std-features=compiler-builtins-mem
 	mkdir -p esp/efi/boot/
 	cp bootloader/target/x86_64-unknown-uefi/release/bootloader-x86_64-uefi.efi esp/efi/boot/bootx64.efi
 
@@ -42,6 +43,7 @@ clean-esp:
 qemu:
 	qemu-system-x86_64 \
 		-m 256 \
+        -enable-kvm \
         -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \
         -drive if=pflash,format=raw,readonly=on,file=$(OVMF_VARS_PATH) \
         -drive format=raw,file=fat:rw:esp
