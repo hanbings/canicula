@@ -5,7 +5,6 @@
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml",
         "./canicula-common/Cargo.toml",
-        "./canicula-efi/Cargo.toml",
         "./canicula-ext4/Cargo.toml",
         "./canicula-kernel/Cargo.toml",
         "./canicula-libs/Cargo.toml",

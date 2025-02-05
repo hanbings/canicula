@@ -11,16 +11,13 @@
 ## 🔨 快速构建
 
 ```shell
-# 构建 x86 架构内核
-$ cargo build --bin canicula-kernel --target x86_64-unknown-none
-# 构建 AArch 64 架构内核
-$ cargo build --bin canicula-kernel --target aarch64-unknown-none
-# 构建 RISC-V 架构内核
-$ cargo build --bin canicula-kernel --target riscv64gc-unknown-none-elf
-# 构建 x86 EFI 文件
-$ cargo build --bin canicula-efi --target x86_64-unknown-uefi
-# 构建 AArch 64 EFI 文件
-$ cargo build --bin canicula-efi --target aarch-unknown-uefi
+git submodule init
+git submodule update
+
+# 构建 bootloader 和内核
+make
+# 使用 qemu 运行
+make qemu
 ```
 
 ## 📦 博客 / 文档

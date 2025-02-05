@@ -1,0 +1,3 @@
+[submodule "bootloader"]
+	path = bootloader
+	url = git@github.com:rust-osdev/bootloader.git
