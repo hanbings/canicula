@@ -42,11 +42,11 @@ clean-esp:
 
 qemu:
 	qemu-system-x86_64 \
-		-m 256 \
-        -enable-kvm \
-        -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \
-        -drive if=pflash,format=raw,readonly=on,file=$(OVMF_VARS_PATH) \
-        -drive format=raw,file=fat:rw:esp
+    -m 256 \
+    -enable-kvm \
+    -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \
+    -drive if=pflash,format=raw,readonly=on,file=$(OVMF_VARS_PATH) \
+    -drive format=raw,file=fat:rw:esp
 
 kill-qemu:
 	pgrep qemu | xargs kill -9
