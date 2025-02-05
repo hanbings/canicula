@@ -3,6 +3,12 @@
 version = 4
 
 [[package]]
+name = "arrayvec"
+version = "0.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
+
+[[package]]
 name = "bit_field"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -23,6 +29,10 @@ checksum = "a35ba5100c2431e20b924c8103c2cf8adb919ed9880f625e8770c3cb9d1b06aa"
 [[package]]
 name = "canicula-common"
 version = "0.1.0"
+dependencies = [
+ "arrayvec",
+ "uefi 0.28.0",
+]
 
 [[package]]
 name = "canicula-efi"
@@ -30,7 +40,7 @@ version = "0.1.0"
 dependencies = [
  "canicula-common",
  "log",
- "uefi",
+ "uefi 0.33.0",
  "x86_64",
  "xmas-elf",
 ]
@@ -48,8 +58,6 @@ version = "0.1.0"
 dependencies = [
  "bootloader_api",
  "canicula-common",
- "lazy_static",
- "log",
  "riscv",
  "sbi-rt",
 ]
@@ -75,15 +83,6 @@ name = "embedded-hal"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "361a90feb7004eca4019fb28352a9465666b24f840f5c3cddf0ff13920590b89"
-
-[[package]]
-name = "lazy_static"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
-dependencies = [
- "spin",
-]
 
 [[package]]
 name = "log"
@@ -161,12 +160,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e6e36312fb5ddc10d08ecdc65187402baba4ac34585cb9d1b78522ae2358d890"
 
 [[package]]
-name = "spin"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
-
-[[package]]
 name = "syn"
 version = "1.0.109"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -199,6 +192,22 @@ dependencies = [
 
 [[package]]
 name = "uefi"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a9c0a56dc9fed2589aad6ddca11c2584968fc21f227b5d7083bb8961d26a69fa"
+dependencies = [
+ "bitflags",
+ "cfg-if",
+ "log",
+ "ptr_meta",
+ "ucs2",
+ "uefi-macros 0.13.0",
+ "uefi-raw 0.5.2",
+ "uguid",
+]
+
+[[package]]
+name = "uefi"
 version = "0.33.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6679b7fc2f6d6d2ea2f67555ef3ed9d71d30c5021faf9193091a5192db7dc468"
@@ -208,9 +217,20 @@ dependencies = [
  "log",
  "ptr_meta",
  "ucs2",
- "uefi-macros",
- "uefi-raw",
+ "uefi-macros 0.17.0",
+ "uefi-raw 0.9.0",
  "uguid",
+]
+
+[[package]]
+name = "uefi-macros"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26a7b1c2c808c3db854a54d5215e3f7e7aaf5dcfbce095598cba6af29895695d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.64",
 ]
 
 [[package]]
@@ -222,6 +242,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.64",
+]
+
+[[package]]
+name = "uefi-raw"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "efa8716f52e8cab8bcedfd5052388a0f263b69fe5cc2561548dc6a530678333c"
+dependencies = [
+ "bitflags",
+ "ptr_meta",
+ "uguid",
 ]
 
 [[package]]
