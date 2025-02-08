@@ -104,6 +104,7 @@ name = "canicula-common"
 version = "0.1.0"
 dependencies = [
  "arrayvec",
+ "noto-sans-mono-bitmap 0.3.1",
  "uefi 0.28.0",
 ]
 
@@ -119,6 +120,7 @@ name = "canicula-kernel"
 version = "0.1.0"
 dependencies = [
  "bootloader_api 0.11.9",
+ "canicula-common",
  "noto-sans-mono-bitmap 0.3.1",
  "riscv",
  "sbi-rt",
