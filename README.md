@@ -55,7 +55,7 @@ make qemu
 
 [10 - 显存映射与图形化（WIP）](docs/graphics.md)
 
-[Ext - 处理器架构](docs/architecture.md)
+[Ext - 处理器架构（WIP）](docs/architecture.md)
 
 [Ext - 模块化设计（WIP）](docs/design.md)
 
