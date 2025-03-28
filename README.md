@@ -37,9 +37,9 @@ make qemu
 
 [1 - 引导](docs/bootloader.md)
 
-[2 - 段、分段、分页与页表（WIP）](docs/paging.md)
+[2 - 中断与异常处理（WIP）](docs/exceptions-and-interrupts.md)
 
-[3 - 中断与异常处理（WIP）](docs/exceptions-and-interrupts.md)
+[3 - 段、分段、分页与页表（WIP）](docs/paging.md)
 
 [4 - 内存管理（WIP）](docs/mm.md)
 
