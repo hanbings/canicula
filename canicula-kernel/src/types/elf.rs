@@ -5,6 +5,7 @@ pub type Elf32Word = u32;
 pub type Elf32Sword = u32;
 pub type UnsignedChar = u8;
 
+#[allow(dead_code)]
 pub struct ELFHeader {
     e_ident: [UnsignedChar; 16],
     e_type: Elf32Half,
@@ -22,6 +23,7 @@ pub struct ELFHeader {
     e_shstrndx: Elf32Half,
 }
 
+#[allow(dead_code)]
 pub struct ELFProgramHeaderTable {
     p_type: Elf32Sword,
     p_offset: Elf32Off,
@@ -33,6 +35,7 @@ pub struct ELFProgramHeaderTable {
     p_align: Elf32Sword,
 }
 
+#[allow(dead_code)]
 pub struct ELFSectionHeaderTable {
     sh_name: Elf32Sword,
     sh_type: Elf32Sword,

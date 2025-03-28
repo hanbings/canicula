@@ -2,6 +2,8 @@
 #![no_main]
 
 mod arch;
+mod config;
+mod types;
 
 #[no_mangle]
 #[cfg(target_arch = "riscv64")]
