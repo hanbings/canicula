@@ -18,7 +18,7 @@
   "pre-link-args": {
     "gnu": ["--fix-cortex-a53-843419"],
     "gnu-lld": ["--fix-cortex-a53-843419"],
-    "ld.lld": ["-Tcanicula-kernel/src/arch/aarch64/linker.ld", "--strip-all"]
+    "ld.lld": ["-Tcanicula-kernel/src/linker/aarch64-linker.ld", "--strip-all"]
   },
   "relocation-model": "static",
   "stack-probes": {

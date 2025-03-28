@@ -1,7 +1,7 @@
 {
-    "rust-analyzer.cargo.target": "x86_64-unknown-linux-gnu",
+    "rust-analyzer.cargo.target": "x86_64-unknown-none",
     "rust-analyzer.checkOnSave.allTargets": false,
-    "rust-analyzer.checkOnSave.target": "x86_64-unknown-linux-gnu",
+    "rust-analyzer.checkOnSave.target": "x86_64-unknown-none",
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml",
         "./canicula-common/Cargo.toml",
@@ -52,7 +52,7 @@
         "uninit",
     ],
     "rust-analyzer.runnables.extraArgs": [
-        "--target=x86_64-unknown-linux-gnu",
+        "--target=x86_64-unknown-none",
         "-Zbuild-std=std,panic_abort",
     ],
 }

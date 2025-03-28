@@ -26,6 +26,6 @@
     ],
     "target-pointer-width": "64",
     "pre-link-args": {
-      "ld.lld": ["-Tcanicula-kernel/src/arch/riscv64/linker.ld"]
+      "ld.lld": ["-Tcanicula-kernel/src/linker/riscv64-linker.ld"]
     }
   }

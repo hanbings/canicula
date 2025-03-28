@@ -1,5 +1,9 @@
 #![no_std]
 #![no_main]
+#![cfg_attr(
+    any(target_arch = "x86", target_arch = "x86_64"),
+    feature(abi_x86_interrupt)
+)]
 
 mod arch;
 mod types;

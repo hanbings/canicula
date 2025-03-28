@@ -1,5 +1,12 @@
 use core::panic::PanicInfo;
 
+use crate::println;
+use crate::serial_println;
+
+mod console;
+mod interrupts;
+mod serial;
+
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     loop {}
@@ -11,7 +18,6 @@ pub struct X86Arch {
 
 impl crate::arch::Arch for X86Arch {
     fn entry(&mut self) -> ! {
-        use canicula_common::console::NotoFontDisplay;
         use noto_sans_mono_bitmap::{FontWeight, RasterHeight};
 
         let frame_buffer = self.boot_info.framebuffer.as_mut().unwrap();
@@ -24,21 +30,19 @@ impl crate::arch::Arch for X86Arch {
             unsafe {
                 buffer.add(index as usize).write(0xff408deb);
             }
-        }
+        }        
 
-        let mut console = NotoFontDisplay::new(
+        crate::arch::x86::console::init(
             width as usize,
             height as usize,
             unsafe { core::slice::from_raw_parts_mut(buffer, (width * height) as usize) },
             FontWeight::Regular,
             RasterHeight::Size16,
         );
+        crate::arch::x86::interrupts::init();
 
-        let msg = "Hello World";
-
-        for _index in 0..100 {
-            console.draw_string(msg);
-        }
+        println!("This is the x86_64 kernel");
+        serial_println!("This is the x86_64 kernel");
 
         loop {}
     }
