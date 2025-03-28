@@ -19,4 +19,4 @@ canicula-common = { path = "../canicula-common" }
 
 [target.riscv64gc-unknown-none-elf.dependencies]
 sbi-rt = { version = "0.0.3", features = ["legacy"] }
-riscv = "0.11.1"
+riscv = "0.13.0"

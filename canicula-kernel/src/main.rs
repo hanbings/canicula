@@ -2,7 +2,6 @@
 #![no_main]
 
 mod arch;
-mod config;
 mod types;
 
 #[no_mangle]
@@ -29,34 +28,7 @@ bootloader_api::entry_point!(kernel_main, config = &CONFIG);
 #[no_mangle]
 #[cfg(target_arch = "x86_64")]
 fn kernel_main(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
-    use canicula_common::console::NotoFontDisplay;
-    use noto_sans_mono_bitmap::{FontWeight, RasterHeight};
+    use arch::Arch;
 
-    let frame_buffer = boot_info.framebuffer.as_mut().unwrap();
-
-    let buffer = frame_buffer.buffer_mut().as_ptr() as *mut u32;
-    let width = frame_buffer.info().width;
-    let height = frame_buffer.info().height;
-
-    for index in 0..(width * height) {
-        unsafe {
-            buffer.add(index as usize).write(0xff408deb);
-        }
-    }
-
-    let mut console = NotoFontDisplay::new(
-        width as usize,
-        height as usize,
-        unsafe { core::slice::from_raw_parts_mut(buffer, (width * height) as usize) },
-        FontWeight::Regular,
-        RasterHeight::Size16,
-    );
-
-    let msg = "Hello World";
-
-    for _index in 0..100 {
-        console.draw_string(msg);
-    }
-
-    loop {}
+    arch::x86::X86Arch { boot_info }.entry();
 }
