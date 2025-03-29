@@ -1,40 +1,8 @@
-use core::fmt;
+use bootloader_api::info::FrameBuffer;
 
-use lazy_static::lazy_static;
-use noto_sans_mono_bitmap::{get_raster, FontWeight, RasterHeight};
-use spin::Mutex;
-
-lazy_static! {
-    static ref CONSOLE: Mutex<Option<NotoFontDisplay>> = {
-        Mutex::new(None)
-    };
-}
-
-pub fn init(width: usize, height: usize, draw_buffer: &'static mut [u32], font_weight: FontWeight, raster_height: RasterHeight) {
-    let console = NotoFontDisplay::new(width, height, draw_buffer, font_weight, raster_height);
-    CONSOLE.lock().replace(console);
-}
-
-pub fn _print(args: fmt::Arguments) {
-    use core::fmt::Write;
-    CONSOLE
-        .lock()
-        .as_mut()
-        .unwrap()
-        .write_fmt(args)
-        .expect("Printing to console failed");
-}
-
-#[macro_export]
-macro_rules! print {
-    ($($arg:tt)*) => ($crate::arch::x86::console::_print(format_args!($($arg)*)));
-}
-
-#[macro_export]
-macro_rules! println {
-    () => ($crate::print!("\n"));
-    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
-}
+use noto_sans_mono_bitmap::get_raster;
+use noto_sans_mono_bitmap::FontWeight;
+use noto_sans_mono_bitmap::RasterHeight;
 
 pub struct NotoFontDisplay {
     width: usize,
@@ -48,6 +16,30 @@ pub struct NotoFontDisplay {
     cursor_y: usize,
 }
 
+pub fn init(frame_buffer: &mut FrameBuffer) {
+    let buffer = frame_buffer.buffer_mut().as_ptr() as *mut u32;
+    let width = frame_buffer.info().width;
+    let height = frame_buffer.info().height;
+
+    for index in 0..(width * height) {
+        unsafe {
+            buffer.add(index as usize).write(0xff408deb);
+        }
+    }
+
+    let mut console = NotoFontDisplay::new(
+        width as usize,
+        height as usize,
+        unsafe { core::slice::from_raw_parts_mut(buffer, (width * height) as usize) },
+        FontWeight::Light,
+        RasterHeight::Size16,
+    );
+
+    console.draw_string("Kernel Message");
+    console.draw_string("Kernel Second Message");
+}
+
+#[allow(dead_code)]
 impl NotoFontDisplay {
     pub fn new(
         width: usize,
@@ -93,13 +85,6 @@ impl NotoFontDisplay {
             self.cursor_y = 0;
             self.cursor_x += self.raster_height as usize;
         }
-    }
-}
-
-impl fmt::Write for NotoFontDisplay {
-    fn write_str(&mut self, s: &str) -> fmt::Result {
-        self.draw_string(s);
-        Ok(())
     }
 }
 

@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
-use crate::serial_println;
+use crate::error;
 
 lazy_static! {
     static ref IDT: InterruptDescriptorTable = {
@@ -16,5 +16,5 @@ pub fn init() {
 }
 
 extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
-    serial_println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
+    error!("exception: breakpoint\n{:#?}", stack_frame);
 }

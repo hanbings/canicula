@@ -10,7 +10,7 @@ path = "src/main.rs"
 [dependencies]
 spin = "0.10.0"
 bootloader_api = "0.11.8"
-noto-sans-mono-bitmap = "=0.3.1"
+noto-sans-mono-bitmap = { version = "0.3.1", features = [ "font_weights_all", "raster_heights_all"] }
 
 canicula-common = { path = "../canicula-common" }
 
