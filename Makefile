@@ -42,7 +42,7 @@ clean-esp:
 
 qemu:
 	qemu-system-x86_64 \
-    -m 256 \
+    -m 64 \
     -nographic \
     -enable-kvm \
     -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \

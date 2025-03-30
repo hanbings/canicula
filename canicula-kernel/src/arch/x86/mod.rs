@@ -3,6 +3,7 @@ use core::panic::PanicInfo;
 use crate::{error, info};
 
 mod console;
+mod gdt;
 mod interrupts;
 mod serial;
 
@@ -19,12 +20,21 @@ pub struct X86Arch {
 
 impl crate::arch::Arch for X86Arch {
     fn entry(&mut self) -> ! {
-        let frame_buffer = self.boot_info.framebuffer.as_mut().unwrap();
-
-        crate::arch::x86::console::init(frame_buffer);
+        crate::arch::x86::console::init(self.boot_info.framebuffer.as_mut().unwrap());
         crate::arch::x86::interrupts::init();
+        crate::arch::x86::gdt::init();
 
         info!("This is the x86_64 kernel message");
+
+        self.boot_info.memory_regions.iter().for_each(|region| {
+            info!(
+                "Memory region: {:#x} - {:#x} ({:#x} bytes), type: {:?}",
+                region.start,
+                region.end,
+                region.end - region.start,
+                region.kind
+            );
+        });
 
         loop {}
     }
