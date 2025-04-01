@@ -1,9 +1,12 @@
 use core::panic::PanicInfo;
 
 use log::*;
-use memory::active_level_4_table;
+use memory::virtual_to_physical;
 use qemu::exit_qemu;
-use x86_64::VirtAddr;
+use x86_64::{
+    structures::paging::{Page, Size4KiB},
+    VirtAddr,
+};
 
 use crate::{println, serial_println};
 
@@ -34,7 +37,6 @@ impl crate::arch::Arch for X86Arch {
         crate::arch::x86::console::init(self.boot_info.framebuffer.as_mut().unwrap());
         crate::arch::x86::interrupts::init();
         crate::arch::x86::gdt::init();
-        crate::arch::x86::memory::init(self.boot_info);
 
         println!("Hello from the x86_64 kernel!");
         println!("More debug info will be display in the serial console.");
@@ -42,6 +44,25 @@ impl crate::arch::Arch for X86Arch {
 
         info!("Hello from the x86_64 kernel!");
         info!("This is the last message from the kernel.");
+
+        let mut mapper = crate::arch::x86::memory::init(self.boot_info);
+        let mut frame_allocator = crate::arch::x86::memory::AbyssFrameAllocator;
+        let page = Page::containing_address(VirtAddr::new(0x114514).align_up(8 as u64));
+        crate::arch::x86::memory::create_example_mapping(
+            0,
+            page,
+            &mut mapper,
+            &mut frame_allocator,
+        );
+
+        let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
+        unsafe {
+            page_ptr.write_volatile(0x114514);
+        };
+
+        warn!("Read from Origin Virt {:x}", unsafe {
+            page_ptr.read_volatile()
+        });
 
         exit_qemu(0x10);
 

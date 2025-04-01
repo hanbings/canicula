@@ -1,13 +1,34 @@
 use log::debug;
 use x86_64::registers::control::Cr3;
-use x86_64::registers::debug;
 use x86_64::structures::paging::page_table::FrameError;
-use x86_64::structures::paging::PageTable;
+use x86_64::structures::paging::PageTableFlags;
+use x86_64::structures::paging::{
+    FrameAllocator, Mapper, OffsetPageTable, Page, PageTable, PhysFrame, Size4KiB,
+};
 use x86_64::{PhysAddr, VirtAddr};
 
-pub unsafe fn active_level_4_table(physical_memory_offset: VirtAddr) -> &'static mut PageTable {
-    use x86_64::registers::control::Cr3;
+pub struct AbyssFrameAllocator;
 
+unsafe impl FrameAllocator<Size4KiB> for AbyssFrameAllocator {
+    fn allocate_frame(&mut self) -> Option<PhysFrame> {
+        None
+    }
+}
+
+pub fn create_example_mapping(
+    physical: u64,
+    page: Page,
+    mapper: &mut OffsetPageTable,
+    frame_allocator: &mut impl FrameAllocator<Size4KiB>,
+) {
+    let frame = PhysFrame::containing_address(PhysAddr::new(physical));
+    let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
+
+    let map_to_result = unsafe { mapper.map_to(page, frame, flags, frame_allocator) };
+    map_to_result.expect("map_to failed").flush();
+}
+
+pub unsafe fn active_level_4_table(physical_memory_offset: VirtAddr) -> &'static mut PageTable {
     let (level_4_table_frame, _) = Cr3::read();
 
     let phys = level_4_table_frame.start_address();
@@ -47,12 +68,12 @@ pub unsafe fn virtual_to_physical(
     Some(frame.start_address() + u64::from(addr.page_offset()))
 }
 
-pub fn init(boot_info: &mut bootloader_api::BootInfo) {
+pub fn init(boot_info: &mut bootloader_api::BootInfo) -> OffsetPageTable<'static> {
     debug!("boot info {:?}", boot_info);
 
-    let phys_mem_offset =
+    let physical_memory_offset =
         VirtAddr::new(boot_info.physical_memory_offset.into_option().unwrap());
-    let l4_table = unsafe { active_level_4_table(phys_mem_offset) };
+    let l4_table = unsafe { active_level_4_table(physical_memory_offset) };
 
     for (index, entry) in l4_table.iter().enumerate() {
         if !entry.is_unused() {
@@ -65,7 +86,7 @@ pub fn init(boot_info: &mut bootloader_api::BootInfo) {
         let end = VirtAddr::new(region.end);
         let size = end - start;
         let region_type = region.kind;
-        
+
         debug!(
             "Memory region: 0x{:x} - 0x{:x} ({:x} bytes) - {:?}",
             start.as_u64(),
@@ -73,5 +94,10 @@ pub fn init(boot_info: &mut bootloader_api::BootInfo) {
             size,
             region_type
         );
+    }
+
+    unsafe {
+        let level_4_table = active_level_4_table(physical_memory_offset);
+        OffsetPageTable::new(level_4_table, physical_memory_offset)
     }
 }
