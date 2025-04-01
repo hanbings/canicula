@@ -1,7 +1,6 @@
 use lazy_static::lazy_static;
+use log::error;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
-
-use crate::error;
 
 lazy_static! {
     static ref IDT: InterruptDescriptorTable = {

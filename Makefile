@@ -1,5 +1,6 @@
 OS := $(shell uname)
 DISTRO := $(shell cat /etc/*release | grep '^ID=' | cut -d '=' -f2)
+LOG_LEVEL ?= DEBUG
 
 OVMF_CODE_PATH := /usr/share/OVMF/OVMF_CODE.fd
 OVMF_VARS_PATH := /usr/share/OVMF/OVMF_VARS.fd
@@ -29,7 +30,7 @@ efi:
 	cp bootloader/target/x86_64-unknown-uefi/release/bootloader-x86_64-uefi.efi esp/efi/boot/bootx64.efi
 
 kernel:
-	cargo build --bin canicula-kernel --target x86_64-unknown-none
+	LOG_LEVEL=$(LOG_LEVEL) cargo build --bin canicula-kernel --target x86_64-unknown-none
 	mkdir -p esp
 	cp target/x86_64-unknown-none/debug/canicula-kernel esp/kernel-x86_64
 
@@ -44,7 +45,7 @@ clean-esp:
 qemu:
 	qemu-system-x86_64 \
     -m 64 \
-    -nographic \
+    -serial stdio \
     -enable-kvm \
     -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
     -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \

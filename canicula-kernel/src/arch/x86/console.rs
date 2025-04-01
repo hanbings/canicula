@@ -1,9 +1,19 @@
+use core::fmt::Write;
+
 use bootloader_api::info::FrameBuffer;
 
+use lazy_static::lazy_static;
 use noto_sans_mono_bitmap::get_raster;
 use noto_sans_mono_bitmap::FontWeight;
 use noto_sans_mono_bitmap::RasterHeight;
+use spin::Mutex;
+use x86_64::instructions::interrupts;
 
+lazy_static! {
+    pub static ref CONSOLE: Mutex<Option<NotoFontDisplay>> = Mutex::new(None);
+}
+
+#[allow(dead_code)]
 pub struct NotoFontDisplay {
     width: usize,
     height: usize,
@@ -27,16 +37,51 @@ pub fn init(frame_buffer: &mut FrameBuffer) {
         }
     }
 
-    let mut console = NotoFontDisplay::new(
+    let console = NotoFontDisplay::new(
         width as usize,
         height as usize,
         unsafe { core::slice::from_raw_parts_mut(buffer, (width * height) as usize) },
         FontWeight::Light,
-        RasterHeight::Size16,
+        RasterHeight::Size24,
     );
 
-    console.draw_string("Kernel Message");
-    console.draw_string("Kernel Second Message");
+    interrupts::without_interrupts(|| {
+        CONSOLE.lock().replace(console);
+
+        CONSOLE
+            .lock()
+            .as_mut()
+            .unwrap()
+            .draw_string("Kernel Message");
+    });
+}
+
+#[doc(hidden)]
+pub fn _print(args: ::core::fmt::Arguments) {
+    use core::fmt::Write;
+    interrupts::without_interrupts(|| {
+        CONSOLE
+            .lock()
+            .as_mut()
+            .unwrap()
+            .write_fmt(args)
+            .expect("Printing to serial failed");
+    });
+}
+
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => {
+        $crate::arch::x86::console::_print(format_args!($($arg)*));
+    };
+}
+
+#[macro_export]
+macro_rules! println {
+    () => ($crate::print!("\n"));
+    ($fmt:expr) => ($crate::print!(concat!($fmt, "\n")));
+    ($fmt:expr, $($arg:tt)*) => ($crate::print!(
+        concat!($fmt, "\n"), $($arg)*));
 }
 
 #[allow(dead_code)]
@@ -52,10 +97,8 @@ impl NotoFontDisplay {
             width,
             height,
             draw_buffer,
-
             font_weight,
             raster_height,
-
             cursor_x: 0,
             cursor_y: 0,
         }
@@ -68,16 +111,33 @@ impl NotoFontDisplay {
     }
 
     pub fn draw_string(&mut self, msg: &str) {
-        draw_string(
-            msg,
-            self.cursor_x as u32,
-            self.cursor_y as u32,
-            self.width,
-            self.height,
-            self.font_weight,
-            self.raster_height,
-            self.draw_buffer,
-        );
+        for (char_i, char) in msg.chars().enumerate() {
+            let char_raster = match get_raster(char, self.font_weight, self.raster_height) {
+                Some(raster) => raster,
+                None => get_raster(' ', self.font_weight, self.raster_height).unwrap(),
+            };
+            for (row_i, row) in char_raster.raster().iter().enumerate() {
+                for (col_i, intensity) in row.iter().enumerate() {
+                    let index = char_i * char_raster.width()
+                        + col_i
+                        + row_i * self.width
+                        + (self.cursor_x as usize)
+                        + (self.cursor_y as usize * self.width);
+
+                    let curr_pixel_rgb = self.draw_buffer[index];
+                    let mut r = ((curr_pixel_rgb & 0xff0000) >> 16) as u8;
+                    let mut g = ((curr_pixel_rgb & 0xff00) >> 8) as u8;
+                    let mut b = (curr_pixel_rgb & 0xff) as u8;
+
+                    r = r.saturating_add(*intensity);
+                    g = g.saturating_add(*intensity);
+                    b = b.saturating_add(*intensity);
+
+                    let new_pixel_rgb = ((r as u32) << 16) + ((g as u32) << 8) + (b as u32);
+                    self.draw_buffer[index] = new_pixel_rgb;
+                }
+            }
+        }
 
         self.cursor_y += msg.len();
 
@@ -88,39 +148,9 @@ impl NotoFontDisplay {
     }
 }
 
-pub fn draw_string(
-    msg: &str,
-    x: u32,
-    y: u32,
-    width: usize,
-    _height: usize,
-    font_weight: FontWeight,
-    raster_height: RasterHeight,
-    draw_buffer: &mut [u32],
-) {
-    for (char_i, char) in msg.chars().enumerate() {
-        let char_raster = get_raster(char, font_weight, raster_height).expect("unknown char");
-        for (row_i, row) in char_raster.raster().iter().enumerate() {
-            for (col_i, intensity) in row.iter().enumerate() {
-                let index = char_i * char_raster.width()
-                    + col_i
-                    + row_i * width
-                    + (x as usize)
-                    + (y as usize * width);
-
-                let curr_pixel_rgb = draw_buffer[index];
-                let mut r = ((curr_pixel_rgb & 0xff0000) >> 16) as u8;
-                let mut g = ((curr_pixel_rgb & 0xff00) >> 8) as u8;
-                let mut b = (curr_pixel_rgb & 0xff) as u8;
-
-                r = r.saturating_add(*intensity);
-                g = g.saturating_add(*intensity);
-                b = b.saturating_add(*intensity);
-
-                let new_pixel_rgb = ((r as u32) << 16) + ((g as u32) << 8) + (b as u32);
-
-                draw_buffer[index] = new_pixel_rgb;
-            }
-        }
+impl Write for NotoFontDisplay {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        self.draw_string(s);
+        Ok(())
     }
 }
