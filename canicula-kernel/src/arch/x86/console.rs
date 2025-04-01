@@ -84,7 +84,6 @@ macro_rules! println {
         concat!($fmt, "\n"), $($arg)*));
 }
 
-#[allow(dead_code)]
 impl NotoFontDisplay {
     pub fn new(
         width: usize,
@@ -104,6 +103,7 @@ impl NotoFontDisplay {
         }
     }
 
+    #[allow(dead_code)]
     pub fn clear(&mut self) {
         for pixel in self.draw_buffer.iter_mut() {
             *pixel = 0;

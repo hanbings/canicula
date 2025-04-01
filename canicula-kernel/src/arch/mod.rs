@@ -7,7 +7,3 @@ pub mod riscv;
 #[cfg(target_arch = "x86_64")]
 #[path = "x86/mod.rs"]
 pub mod x86;
-
-pub trait Arch {
-    fn entry(&mut self) -> !;
-}

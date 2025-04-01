@@ -4,7 +4,7 @@
 
 ## ⭐ Canicula OS
 
-感谢 [xv6-rev7](https://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf)、[xv6（中文文档）](https://th0ar.gitbooks.io/xv6-chinese/content/) 和 [rCore](https://rcore-os.cn/rCore-Tutorial-Book-v3/index.html) 这样优秀的教材！
+感谢 [xv6-rev7](https://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf)、[xv6（中文文档）](https://th0ar.gitbooks.io/xv6-chinese/content/)、[rCore](https://rcore-os.cn/rCore-Tutorial-Book-v3/index.html) 和 [os.phil-opp.com](https://os.phil-opp.com/zh-CN/) 这样优秀的教材！
 
 那么旅途从这里开始！
 

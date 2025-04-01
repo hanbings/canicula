@@ -4,6 +4,7 @@
     any(target_arch = "x86", target_arch = "x86_64"),
     feature(abi_x86_interrupt)
 )]
+#![feature(alloc_error_handler)]
 
 mod arch;
 mod types;
@@ -33,7 +34,5 @@ bootloader_api::entry_point!(kernel_main, config = &CONFIG);
 #[no_mangle]
 #[cfg(target_arch = "x86_64")]
 fn kernel_main(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
-    use arch::Arch;
-
-    arch::x86::X86Arch { boot_info }.entry();
+    arch::x86::entry(boot_info)
 }

@@ -20,6 +20,7 @@ x86_64 = "0.15.2"
 pic8259 = "0.11.0"
 uart_16550 = "0.3.2"
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
+linked_list_allocator = "0.10.5"
 
 [target.aarch64-unknown-none.dependencies]
 

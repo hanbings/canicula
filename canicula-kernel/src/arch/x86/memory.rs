@@ -1,31 +1,38 @@
+use bootloader_api::info::{MemoryRegionKind, MemoryRegions};
 use log::debug;
 use x86_64::registers::control::Cr3;
 use x86_64::structures::paging::page_table::FrameError;
-use x86_64::structures::paging::PageTableFlags;
-use x86_64::structures::paging::{
-    FrameAllocator, Mapper, OffsetPageTable, Page, PageTable, PhysFrame, Size4KiB,
-};
+use x86_64::structures::paging::{FrameAllocator, OffsetPageTable, PageTable, PhysFrame, Size4KiB};
 use x86_64::{PhysAddr, VirtAddr};
 
-pub struct AbyssFrameAllocator;
+pub struct AbyssFrameAllocator {
+    memory_map: &'static MemoryRegions,
+    next: usize,
+}
 
-unsafe impl FrameAllocator<Size4KiB> for AbyssFrameAllocator {
-    fn allocate_frame(&mut self) -> Option<PhysFrame> {
-        None
+impl AbyssFrameAllocator {
+    pub unsafe fn init(memory_map: &'static MemoryRegions) -> Self {
+        AbyssFrameAllocator {
+            memory_map,
+            next: 0,
+        }
+    }
+
+    fn usable_frames(&self) -> impl Iterator<Item = PhysFrame> {
+        let regions = self.memory_map.iter();
+        let usable_regions = regions.filter(|r| r.kind == MemoryRegionKind::Usable);
+        let addr_ranges = usable_regions.map(|r| r.start..r.end);
+        let frame_addresses = addr_ranges.flat_map(|r| r.step_by(4096));
+        frame_addresses.map(|addr| PhysFrame::containing_address(PhysAddr::new(addr)))
     }
 }
 
-pub fn create_example_mapping(
-    physical: u64,
-    page: Page,
-    mapper: &mut OffsetPageTable,
-    frame_allocator: &mut impl FrameAllocator<Size4KiB>,
-) {
-    let frame = PhysFrame::containing_address(PhysAddr::new(physical));
-    let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
-
-    let map_to_result = unsafe { mapper.map_to(page, frame, flags, frame_allocator) };
-    map_to_result.expect("map_to failed").flush();
+unsafe impl FrameAllocator<Size4KiB> for AbyssFrameAllocator {
+    fn allocate_frame(&mut self) -> Option<PhysFrame> {
+        let frame = self.usable_frames().nth(self.next);
+        self.next += 1;
+        frame
+    }
 }
 
 pub unsafe fn active_level_4_table(physical_memory_offset: VirtAddr) -> &'static mut PageTable {
@@ -38,6 +45,7 @@ pub unsafe fn active_level_4_table(physical_memory_offset: VirtAddr) -> &'static
     unsafe { &mut *page_table_ptr }
 }
 
+#[allow(dead_code)]
 pub unsafe fn virtual_to_physical(
     addr: VirtAddr,
     physical_memory_offset: VirtAddr,
@@ -68,7 +76,9 @@ pub unsafe fn virtual_to_physical(
     Some(frame.start_address() + u64::from(addr.page_offset()))
 }
 
-pub fn init(boot_info: &mut bootloader_api::BootInfo) -> OffsetPageTable<'static> {
+pub fn init(
+    boot_info: &'static mut bootloader_api::BootInfo,
+) -> (OffsetPageTable<'static>, AbyssFrameAllocator) {
     debug!("boot info {:?}", boot_info);
 
     let physical_memory_offset =
@@ -98,6 +108,9 @@ pub fn init(boot_info: &mut bootloader_api::BootInfo) -> OffsetPageTable<'static
 
     unsafe {
         let level_4_table = active_level_4_table(physical_memory_offset);
-        OffsetPageTable::new(level_4_table, physical_memory_offset)
+        let table = OffsetPageTable::new(level_4_table, physical_memory_offset);
+        let frame_allocator = AbyssFrameAllocator::init(&boot_info.memory_regions);
+
+        (table, frame_allocator)
     }
 }

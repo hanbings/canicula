@@ -122,6 +122,7 @@ dependencies = [
  "bootloader_api 0.11.9",
  "canicula-common",
  "lazy_static",
+ "linked_list_allocator",
  "log",
  "noto-sans-mono-bitmap 0.3.1",
  "pic8259",
@@ -216,6 +217,15 @@ name = "libc"
 version = "0.2.169"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5aba8db14291edd000dfcc4d620c7ebfb122c613afb886ca8803fa4e128a20a"
+
+[[package]]
+name = "linked_list_allocator"
+version = "0.10.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9afa463f5405ee81cdb9cc2baf37e08ec7e4c8209442b5d72c04cfb2cd6e6286"
+dependencies = [
+ "spinning_top",
+]
 
 [[package]]
 name = "lock_api"
