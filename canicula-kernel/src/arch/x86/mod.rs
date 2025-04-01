@@ -1,10 +1,13 @@
 use core::panic::PanicInfo;
 
+use qemu::exit_qemu;
+
 use crate::{error, info};
 
 mod console;
 mod gdt;
 mod interrupts;
+mod qemu;
 mod serial;
 
 #[panic_handler]
@@ -36,6 +39,6 @@ impl crate::arch::Arch for X86Arch {
             );
         });
 
-        loop {}
+        exit_qemu(0x10)
     }
 }

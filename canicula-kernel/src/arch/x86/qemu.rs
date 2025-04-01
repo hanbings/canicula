@@ -1,5 +1,10 @@
-pub fn exit_qemu(exit_code: QemuExitCode) {
+pub fn exit_qemu(exit_code: u32) -> ! {
+    use x86_64::instructions::port::Port;
+
     unsafe {
-        asm!("out dx, eax", in("dx") 0xf4, in("eax") exit_code as u32, options(nomem, nostack, preserves_flags));
+        let mut port = Port::new(0xf4);
+        port.write(exit_code);
     }
+
+    loop {}
 }

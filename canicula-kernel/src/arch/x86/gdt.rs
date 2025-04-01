@@ -1,5 +1,11 @@
 use lazy_static::lazy_static;
-use x86_64::{structures::{gdt::{Descriptor, GlobalDescriptorTable, SegmentSelector}, tss::TaskStateSegment}, VirtAddr};
+use x86_64::{
+    structures::{
+        gdt::{Descriptor, GlobalDescriptorTable, SegmentSelector},
+        tss::TaskStateSegment,
+    },
+    VirtAddr,
+};
 
 pub const DOUBLE_FAULT_IST_INDEX: u16 = 0;
 
@@ -17,7 +23,6 @@ lazy_static! {
         };
         tss
     };
-    
     static ref GDT: GdtFlush = {
         let mut gdt = GlobalDescriptorTable::new();
         let code_selector = gdt.append(Descriptor::kernel_code_segment());
@@ -25,7 +30,10 @@ lazy_static! {
 
         GdtFlush {
             global_descriptor_table: gdt,
-            selectors: Selectors { code_selector, tss_selector }
+            selectors: Selectors {
+                code_selector,
+                tss_selector,
+            },
         }
     };
 }
@@ -41,9 +49,9 @@ struct GdtFlush {
 }
 
 pub fn init() {
+    use x86_64::instructions::segmentation::{Segment, CS};
     use x86_64::instructions::tables::load_tss;
-    use x86_64::instructions::segmentation::{CS, Segment};
-    
+
     GDT.global_descriptor_table.load();
     unsafe {
         CS::set_reg(GDT.selectors.code_selector);

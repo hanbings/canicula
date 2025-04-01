@@ -40,14 +40,17 @@ clean:
 clean-esp:
 	rm -rf esp
 
+# ([ $$? -eq 33 ] && exit 0) is used to ignore the return code 0x10 in qemu isa-debug-exit
 qemu:
 	qemu-system-x86_64 \
     -m 64 \
     -nographic \
     -enable-kvm \
+    -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
     -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \
     -drive if=pflash,format=raw,readonly=on,file=$(OVMF_VARS_PATH) \
-    -drive format=raw,file=fat:rw:esp
+    -drive format=raw,file=fat:rw:esp \
+    || ([ $$? -eq 33 ] && exit 0)
 
 kill-qemu:
 	pgrep qemu | xargs kill -9
