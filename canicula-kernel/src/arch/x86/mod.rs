@@ -7,8 +7,8 @@ use qemu::exit_qemu;
 
 use crate::{println, serial_println};
 
+mod acpi;
 mod allocator;
-mod apic;
 mod console;
 mod gdt;
 mod interrupts;
@@ -47,7 +47,7 @@ pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
     crate::arch::x86::gdt::init();
     let (mut mapper, mut frame_allocator, boot_info) = crate::arch::x86::memory::init(boot_info);
     let _ = crate::arch::x86::allocator::init(&mut mapper, &mut frame_allocator);
-    let (_rsdp, _rsdt) = crate::arch::x86::apic::init(boot_info, &mut mapper, &mut frame_allocator);
+    let (_rsdp, _rsdt) = crate::arch::x86::acpi::init(boot_info, &mut mapper, &mut frame_allocator);
 
     unsafe {
         let heap_start = HEAP_START as *mut u8;
