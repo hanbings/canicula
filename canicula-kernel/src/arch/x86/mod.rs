@@ -34,7 +34,7 @@ pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
     crate::arch::x86::gdt::init();
     let (mut mapper, mut frame_allocator, boot_info) = crate::arch::x86::memory::init(boot_info);
     let _ = crate::arch::x86::allocator::init(&mut mapper, &mut frame_allocator);
-    let (_rsdp, _rsdt) = crate::arch::x86::acpi::init(boot_info);
+    crate::arch::x86::acpi::init(boot_info);
     crate::arch::x86::apic::init();
 
     println!("Hello from the x86_64 kernel!");

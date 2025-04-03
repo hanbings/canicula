@@ -137,7 +137,6 @@ dependencies = [
  "linked_list_allocator",
  "log",
  "noto-sans-mono-bitmap 0.3.1",
- "pic8259",
  "riscv",
  "sbi-rt",
  "spin 0.10.0",
@@ -273,15 +272,6 @@ name = "paste"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
-
-[[package]]
-name = "pic8259"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62d9a86c292b165f757e47e7fd66855def189b2564609bc4203727b27c33db22"
-dependencies = [
- "x86_64 0.15.2",
-]
 
 [[package]]
 name = "ppv-lite86"
