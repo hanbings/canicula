@@ -3,6 +3,17 @@
 version = 4
 
 [[package]]
+name = "acpi"
+version = "5.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "94476c7ef97af4c4d998b3f422c1b01d5211aad57c80ed200baf148d1f1efab6"
+dependencies = [
+ "bit_field",
+ "bitflags 2.5.0",
+ "log",
+]
+
+[[package]]
 name = "arrayvec"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -119,6 +130,7 @@ dependencies = [
 name = "canicula-kernel"
 version = "0.1.0"
 dependencies = [
+ "acpi",
  "bootloader_api 0.11.9",
  "canicula-common",
  "lazy_static",
@@ -130,6 +142,7 @@ dependencies = [
  "sbi-rt",
  "spin 0.10.0",
  "uart_16550 0.3.2",
+ "x86",
  "x86_64 0.15.2",
 ]
 

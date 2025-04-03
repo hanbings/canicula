@@ -1,9 +1,7 @@
+use super::memory::physical_to_virtual;
 use bootloader_api::BootInfo;
 use log::{debug, warn};
-use x86_64::{
-    structures::paging::{FrameAllocator, Mapper, Page, PageTableFlags, PhysFrame, Size4KiB},
-    PhysAddr, VirtAddr,
-};
+use x86_64::PhysAddr;
 
 #[derive(Clone, Copy, Debug)]
 #[repr(C, packed)]
@@ -44,56 +42,24 @@ struct AcpiTableHeader {
     creatorrevision: u32,
 }
 
-pub fn init(
-    boot_info: &BootInfo,
-    mapper: &mut impl Mapper<Size4KiB>,
-    frame_allocator: &mut impl FrameAllocator<Size4KiB>,
-) -> (Rsdp, Rsdt) {
-    let rsdp_addr = boot_info.rsdp_addr.as_ref().unwrap();
-
-    unsafe {
-        let _ = mapper.map_to(
-            Page::<Size4KiB>::from_start_address(VirtAddr::new(*rsdp_addr).align_down(4096 as u32)).unwrap(),
-            PhysFrame::containing_address(PhysAddr::new(*rsdp_addr)),
-            PageTableFlags::PRESENT | PageTableFlags::WRITABLE,
-            frame_allocator,
-        );
-    };
-
-    let rsdp = (*rsdp_addr) as *const Rsdp;
+pub fn init(boot_info: &BootInfo) -> (Rsdp, Rsdt) {
+    let rsdp_addr = *boot_info.rsdp_addr.as_ref().unwrap();
+    let rsdp = unsafe { physical_to_virtual(PhysAddr::new(rsdp_addr)).as_ptr() } as *const Rsdp;
     unsafe {
         warn!("find rsdp! {:?}", (*rsdp));
     }
 
     let rsdt_addr: u64 = unsafe { (*rsdp).rsdt_address }.into();
-    unsafe {
-        let _ = mapper.map_to(
-            Page::<Size4KiB>::from_start_address(VirtAddr::new(rsdt_addr).align_down(4096 as u32)).unwrap(),
-            PhysFrame::containing_address(PhysAddr::new(rsdt_addr)),
-            PageTableFlags::PRESENT | PageTableFlags::WRITABLE,
-            frame_allocator,
-        );
-    };
+    let rsdt = unsafe { physical_to_virtual(PhysAddr::new(rsdt_addr)).as_ptr() } as *const Rsdt;
 
-    let rsdt = rsdt_addr as *const Rsdt;
     unsafe {
         warn!("find rsdt! {:?}", (*rsdt));
-        let num_tables = ((*rsdt).header.length - core::mem::size_of::<AcpiTableHeader>() as u32) / 4;
+        let num_tables =
+            ((*rsdt).header.length - core::mem::size_of::<AcpiTableHeader>() as u32) / 4;
 
         for i in 0..num_tables {
             let table_addr = (*rsdt).tables.as_ptr().add(i as usize);
             debug!("Table {} Address: {:?}", i + 1, table_addr);
-
-            let header_ptr = table_addr as *const AcpiTableHeader;
-            let header = *header_ptr;
-            debug!(
-                "ACPI Table Header: sig={:?} len={} rev={} checksum={} oemid={:?}",
-                core::str::from_utf8(&header.signature).unwrap_or("???"),
-                header.length,
-                header.revision,
-                header.checksum,
-                header.oemid
-            )
         }
     }
 

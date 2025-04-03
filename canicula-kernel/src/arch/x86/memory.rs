@@ -1,5 +1,7 @@
 use bootloader_api::info::{MemoryRegionKind, MemoryRegions};
+use lazy_static::lazy_static;
 use log::debug;
+use spin::Once;
 use x86_64::registers::control::Cr3;
 use x86_64::structures::paging::page_table::FrameError;
 use x86_64::structures::paging::{FrameAllocator, OffsetPageTable, PageTable, PhysFrame, Size4KiB};
@@ -35,6 +37,10 @@ unsafe impl FrameAllocator<Size4KiB> for AbyssFrameAllocator {
     }
 }
 
+lazy_static! {
+    static ref PHYSICAL_MEMORY_OFFSET: Once<VirtAddr> = Once::new();
+}
+
 pub unsafe fn active_level_4_table(physical_memory_offset: VirtAddr) -> &'static mut PageTable {
     let (level_4_table_frame, _) = Cr3::read();
 
@@ -43,6 +49,12 @@ pub unsafe fn active_level_4_table(physical_memory_offset: VirtAddr) -> &'static
     let page_table_ptr: *mut PageTable = virt.as_mut_ptr();
 
     unsafe { &mut *page_table_ptr }
+}
+
+#[allow(dead_code)]
+pub unsafe fn physical_to_virtual(addr: PhysAddr) -> VirtAddr {
+    let phys = PHYSICAL_MEMORY_OFFSET.get().unwrap();
+    VirtAddr::new(phys.as_u64() + addr.as_u64())
 }
 
 #[allow(dead_code)]
@@ -87,6 +99,9 @@ pub fn init(
 
     let physical_memory_offset =
         VirtAddr::new(boot_info.physical_memory_offset.into_option().unwrap());
+
+    PHYSICAL_MEMORY_OFFSET.call_once(|| physical_memory_offset);
+
     let l4_table = unsafe { active_level_4_table(physical_memory_offset) };
 
     for (index, entry) in l4_table.iter().enumerate() {
