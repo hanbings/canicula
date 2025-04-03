@@ -78,8 +78,12 @@ pub unsafe fn virtual_to_physical(
 
 pub fn init(
     boot_info: &'static mut bootloader_api::BootInfo,
-) -> (OffsetPageTable<'static>, AbyssFrameAllocator) {
-    debug!("boot info {:?}", boot_info);
+) -> (
+    OffsetPageTable<'static>,
+    AbyssFrameAllocator,
+    &'static bootloader_api::BootInfo,
+) {
+    debug!("boot info {:#?}", boot_info);
 
     let physical_memory_offset =
         VirtAddr::new(boot_info.physical_memory_offset.into_option().unwrap());
@@ -111,6 +115,6 @@ pub fn init(
         let table = OffsetPageTable::new(level_4_table, physical_memory_offset);
         let frame_allocator = AbyssFrameAllocator::init(&boot_info.memory_regions);
 
-        (table, frame_allocator)
+        (table, frame_allocator, boot_info)
     }
 }
