@@ -8,12 +8,13 @@ use x86_64::{
 };
 
 extern crate alloc;
+use core::alloc::Layout;
 
 pub const HEAP_START: usize = 0x_4444_4444_0000;
 pub const HEAP_SIZE: usize = 100 * 1024;
 
 #[alloc_error_handler]
-fn alloc_error_handler(layout: alloc::alloc::Layout) -> ! {
+fn alloc_error_handler(layout: Layout) -> ! {
     error!("allocation error: {:?}", layout);
 
     loop {

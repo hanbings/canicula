@@ -35,6 +35,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
+name = "bit"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b645c5c09a7d4035949cfce1a915785aaad6f17800c35fda8a8c311c491f284"
+
+[[package]]
 name = "bit_field"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -65,7 +71,7 @@ version = "0.11.8"
 dependencies = [
  "bootloader-boot-config",
  "bootloader_api 0.11.8",
- "conquer-once",
+ "conquer-once 0.3.2",
  "log",
  "noto-sans-mono-bitmap 0.2.0",
  "rand",
@@ -133,6 +139,7 @@ dependencies = [
  "acpi",
  "bootloader_api 0.11.9",
  "canicula-common",
+ "conquer-once 0.4.0",
  "lazy_static",
  "linked_list_allocator",
  "log",
@@ -141,6 +148,7 @@ dependencies = [
  "sbi-rt",
  "spin 0.10.0",
  "uart_16550 0.3.2",
+ "x2apic",
  "x86",
  "x86_64 0.15.2",
 ]
@@ -160,6 +168,15 @@ name = "conquer-once"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c6d3a9775a69f6d1fe2cc888999b67ed30257d3da4d2af91984e722f2ec918a"
+dependencies = [
+ "conquer-util",
+]
+
+[[package]]
+name = "conquer-once"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d008a441c0f269f36ca13712528069a86a3e60dffee1d98b976eb3b0b2160b4"
 dependencies = [
  "conquer-util",
 ]
@@ -654,6 +671,19 @@ name = "wasi"
 version = "0.11.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
+
+[[package]]
+name = "x2apic"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db5cbcb7faedfa15f90376004ffc0cb42e427623ab56629f0073d275ee8e7043"
+dependencies = [
+ "bit",
+ "bitflags 1.3.2",
+ "paste",
+ "raw-cpuid",
+ "x86_64 0.15.2",
+]
 
 [[package]]
 name = "x86"
