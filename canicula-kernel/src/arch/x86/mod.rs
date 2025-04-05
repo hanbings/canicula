@@ -12,6 +12,8 @@ mod gdt;
 mod interrupts;
 mod logging;
 mod memory;
+mod pcie;
+mod process;
 mod qemu;
 mod serial;
 
@@ -38,9 +40,15 @@ pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
     let _ = crate::arch::x86::allocator::init(&mut mapper, &mut frame_allocator);
     info!("Memory initialized");
 
+    crate::arch::x86::acpi::init(boot_info.rsdp_addr.as_ref().unwrap());
+    info!("ACPI Initialized");
+
     crate::arch::x86::apic::init(boot_info.rsdp_addr.as_ref().unwrap());
     crate::arch::x86::interrupts::enable_interrupts();
     info!("APIC Initialized");
+
+    crate::arch::x86::pcie::init();
+    info!("PCIe Initialized");
 
     println!("Hello from the x86_64 kernel!");
     println!("More debug info will be display in the serial console.");
@@ -53,8 +61,8 @@ pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
     let vec = alloc::vec![1, 1, 4, 5, 1, 4];
     let hello = alloc::string::String::from("Hello");
 
-    warn!("{:?}", vec);
-    warn!("{:?} from the x86_64 kernel!", hello);
+    debug!("{:?}", vec);
+    debug!("{:?} from the x86_64 kernel!", hello);
 
     loop {
         x86_64::instructions::hlt();

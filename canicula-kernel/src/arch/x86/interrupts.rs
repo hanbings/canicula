@@ -1,4 +1,4 @@
-use log::warn;
+use log::{debug, warn};
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 
 use lazy_static::lazy_static;
@@ -203,7 +203,7 @@ pub fn init() {
 }
 
 pub fn enable_interrupts() {
-    warn!("Enabling interrupts");
+    debug!("Enabling interrupts");
     x86_64::instructions::interrupts::enable();
-    warn!("Interrupts enabled");
+    debug!("Interrupts enabled");
 }

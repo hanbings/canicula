@@ -1,6 +1,6 @@
 use acpi::{AcpiTables, InterruptModel};
 use conquer_once::spin::OnceCell;
-use log::{info, warn};
+use log::debug;
 use spin::{Mutex, Once};
 
 extern crate alloc;
@@ -36,9 +36,9 @@ impl IOApic {
     }
 
     pub fn init(&mut self) {
-        warn!("Initializing IOAPIC");
+        debug!("Initializing IOAPIC");
         self.ioapic = unsafe { Some(IoApic::new(self.addr)) };
-        warn!("IOAPIC initialized");
+        debug!("IOAPIC initialized");
     }
 
     #[allow(clippy::missing_safety_doc)]
@@ -146,21 +146,21 @@ pub fn init(rsdp_addr: &u64) {
     let platform_info = tables.platform_info().unwrap();
     let interrupt_model = platform_info.interrupt_model;
 
-    warn!("Interrupt Model: {:?}", interrupt_model);
+    debug!("Interrupt Model: {:?}", interrupt_model);
 
     if let InterruptModel::Apic(apic) = interrupt_model {
         let lapic_physical_address: u64 = apic.local_apic_address;
         init_lapic(lapic_physical_address);
         for i in apic.io_apics.iter() {
             init_ioapic(i.address as u64);
-            info!("IO Pushed: {:?}", i);
+            debug!("IO Pushed: {:?}", i);
         }
 
         unsafe {
             for ioapic in IOAPIC.get().unwrap().lock().iter_mut() {
                 ioapic.init();
                 ioapic.enable();
-                info!("IO Enabled: {:?}", ioapic.get_ioapic());
+                debug!("IO Enabled: {:?}", ioapic.get_ioapic());
             }
         }
 

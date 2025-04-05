@@ -1,6 +1,8 @@
 use core::ptr::NonNull;
 
-use acpi::{AcpiHandler, PhysicalMapping};
+use acpi::{
+    bgrt::Bgrt, fadt::Fadt, hpet::HpetTable, madt::Madt, AcpiHandler, AcpiTables, PhysicalMapping,
+};
 use x86_64::PhysAddr;
 
 #[derive(Debug, Clone, Copy)]
@@ -19,4 +21,24 @@ impl AcpiHandler for Handler {
     }
 
     fn unmap_physical_region<T>(_region: &acpi::PhysicalMapping<Self, T>) {}
+}
+
+pub fn init(rsdp_addr: &u64) {
+    let tables = unsafe {
+        AcpiTables::from_rsdp(crate::arch::x86::acpi::Handler, *rsdp_addr as usize).unwrap()
+    };
+    let _platform_info = tables.platform_info().unwrap();
+
+    let _bgrt = tables
+        .find_table::<Bgrt>()
+        .unwrap_or_else(|_| panic!("Failed to get BGR table"));
+    let _hpet = tables
+        .find_table::<HpetTable>()
+        .unwrap_or_else(|_| panic!("Failed to get HPET table"));
+    let _fadt = tables
+        .find_table::<Fadt>()
+        .unwrap_or_else(|_| panic!("Failed to get FADT table"));
+    let _madt = tables
+        .find_table::<Madt>()
+        .unwrap_or_else(|_| panic!("Failed to get MADT table"));
 }
