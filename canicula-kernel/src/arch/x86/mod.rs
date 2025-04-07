@@ -1,5 +1,6 @@
 use core::panic::PanicInfo;
 
+use bga::{bga_set_bank, bga_set_video_mode, VBE_DISPI_BPP_32};
 use log::*;
 
 use crate::{println, serial_println};
@@ -7,6 +8,7 @@ use crate::{println, serial_println};
 mod acpi;
 mod allocator;
 mod apic;
+mod bga;
 mod console;
 mod gdt;
 mod interrupts;
@@ -60,6 +62,21 @@ pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
 
     let vec = alloc::vec![1, 1, 4, 5, 1, 4];
     let hello = alloc::string::String::from("Hello");
+
+    bga_set_video_mode(600, 800, VBE_DISPI_BPP_32 as u32, true, true);
+    bga_set_bank(0);
+
+    let framebuffer = boot_info.framebuffer.as_ref().unwrap().buffer().as_ptr() as *mut u32;
+
+    unsafe {
+        let end = framebuffer.offset((600 * 800) as isize);
+
+        let mut pixel = framebuffer;
+        while pixel < end {
+            *pixel = 0xfff6e298;
+            pixel = pixel.add(1);
+        }
+    }
 
     debug!("{:?}", vec);
     debug!("{:?} from the x86_64 kernel!", hello);
