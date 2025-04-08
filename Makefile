@@ -44,7 +44,7 @@ clean-esp:
 # ([ $$? -eq 33 ] && exit 0) is used to ignore the return code 0x10 in qemu isa-debug-exit
 qemu:
 	qemu-system-x86_64 \
-    -m 64 \
+    -m 256 \
     -serial stdio \
     -enable-kvm \
     -device isa-debug-exit,iobase=0xf4,iosize=0x04 \

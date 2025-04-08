@@ -3,7 +3,7 @@ use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, Pag
 
 use lazy_static::lazy_static;
 
-use crate::{arch::x86::qemu::exit_qemu, println, serial_println};
+use crate::{println, serial_println};
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
@@ -189,7 +189,8 @@ pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: Interrupt
 
     warn!("Keyboard scancode: {}", scancode);
     if scancode == 28 {
-        exit_qemu(0x10);
+        crate::arch::x86::acpi::shutdown();
+        crate::arch::x86::qemu::exit_qemu(0x10);
     }
 
     unsafe {

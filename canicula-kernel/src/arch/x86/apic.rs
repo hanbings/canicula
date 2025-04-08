@@ -141,7 +141,11 @@ pub fn init_ioapic(ioapic_addr: u64) {
 
 pub fn init(rsdp_addr: &u64) {
     let tables = unsafe {
-        AcpiTables::from_rsdp(crate::arch::x86::acpi::Handler, *rsdp_addr as usize).unwrap()
+        AcpiTables::from_rsdp(
+            crate::arch::x86::acpi::handler::AcpiHandler,
+            *rsdp_addr as usize,
+        )
+        .unwrap()
     };
     let platform_info = tables.platform_info().unwrap();
     let interrupt_model = platform_info.interrupt_model;
