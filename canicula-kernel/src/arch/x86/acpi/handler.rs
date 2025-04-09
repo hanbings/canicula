@@ -116,16 +116,12 @@ impl aml::Handler for AmlHandler {
 }
 
 fn read_addr<T: Copy>(addr: usize) -> T {
-    let virt = unsafe {
-        crate::arch::x86::memory::physical_to_virtual(PhysAddr::new(addr as u64))
-    };
+    let virt = unsafe { crate::arch::x86::memory::physical_to_virtual(PhysAddr::new(addr as u64)) };
     unsafe { *virt.as_ptr::<T>() }
 }
 
 fn write_addr<T: Copy>(addr: usize, value: T) {
-    let virt = unsafe {
-        crate::arch::x86::memory::physical_to_virtual(PhysAddr::new(addr as u64))
-    };
+    let virt = unsafe { crate::arch::x86::memory::physical_to_virtual(PhysAddr::new(addr as u64)) };
     unsafe { *virt.as_mut_ptr::<T>() = value };
 }
 

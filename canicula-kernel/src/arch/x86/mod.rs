@@ -20,6 +20,8 @@ mod serial;
 
 extern crate alloc;
 
+static LOGO: &'static [u8] = include_bytes!("../../../../resources/images/logo.png");
+
 #[panic_handler]
 pub fn panic(info: &PanicInfo) -> ! {
     error!("PANIC: {:#?}", info);
@@ -58,18 +60,30 @@ pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
     info!("Hello from the x86_64 kernel!");
     info!("This is the last message from the kernel.");
 
-    bga_set_video_mode(600, 800, VBE_DISPI_BPP_32 as u32, true, true);
+    let logo = png_decoder::decode(LOGO).unwrap();
+    let width = logo.0.width;
+    let height = logo.0.height;
+    let pixels = logo.1;
+
+    bga_set_video_mode(width, height, VBE_DISPI_BPP_32 as u32, true, true);
     bga_set_bank(0);
 
     let framebuffer = boot_info.framebuffer.as_ref().unwrap().buffer().as_ptr() as *mut u32;
-
     unsafe {
-        let end = framebuffer.offset((600 * 800) as isize);
-
-        let mut pixel = framebuffer;
-        while pixel < end {
-            *pixel = 0xfff6e298;
-            pixel = pixel.add(1);
+        for y in 0..height {
+            for x in 0..width {
+                let index = y * width + x;
+                let r = pixels[(index * 4) as usize];
+                let g = pixels[(index * 4 + 1) as usize];
+                let b = pixels[(index * 4 + 2) as usize];
+                let a = pixels[(index * 4 + 3) as usize];
+                let color = ((r as u32) << 16) | ((g as u32) << 8) | (b as u32);
+                if a > 0 {
+                    *framebuffer.offset(index as isize) = color;
+                } else {
+                    *framebuffer.offset(index as isize) = 0x00000000;
+                }
+            }
         }
     }
 

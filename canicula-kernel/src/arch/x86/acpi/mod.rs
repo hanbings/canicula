@@ -44,9 +44,8 @@ pub fn init(rsdp_addr: &u64) {
     let pm1a_control_block = fadt.pm1a_control_block().unwrap();
     let slp_typ_a = {
         let table = unsafe {
-            let ptr = crate::arch::x86::memory::physical_to_virtual(PhysAddr::new(
-                dsdt.address as u64,
-            ));
+            let ptr =
+                crate::arch::x86::memory::physical_to_virtual(PhysAddr::new(dsdt.address as u64));
             core::slice::from_raw_parts(ptr.as_ptr(), dsdt.length as usize)
         };
 

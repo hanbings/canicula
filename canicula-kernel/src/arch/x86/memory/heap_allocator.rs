@@ -11,7 +11,7 @@ extern crate alloc;
 use core::alloc::Layout;
 
 pub const HEAP_START: usize = 0x_ffff_a000_0000_0000;
-pub const HEAP_SIZE: usize = 16 * 1024 * 1024;
+pub const HEAP_SIZE: usize = 32 * 1024 * 1024;
 
 #[alloc_error_handler]
 fn alloc_error_handler(layout: Layout) -> ! {

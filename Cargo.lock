@@ -14,6 +14,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "adler"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
+
+[[package]]
 name = "aml"
 version = "0.16.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -169,7 +175,9 @@ dependencies = [
  "lazy_static",
  "linked_list_allocator",
  "log",
+ "nostd",
  "noto-sans-mono-bitmap 0.3.1",
+ "png-decoder",
  "riscv",
  "sbi-rt",
  "spin 0.10.0",
@@ -212,6 +220,15 @@ name = "conquer-util"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e763eef8846b13b380f37dfecda401770b0ca4e56e95170237bd7c25c7db3582"
+
+[[package]]
+name = "crc32fast"
+version = "1.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a97769d94ddab943e4510d138150169a2758b5ef3eb191a9ee688de3e23ef7b3"
+dependencies = [
+ "cfg-if",
+]
 
 [[package]]
 name = "critical-section"
@@ -305,6 +322,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
 
 [[package]]
+name = "memchr"
+version = "2.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
+
+[[package]]
+name = "miniz_oxide"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a92518e98c078586bc6c934028adcca4c92a53d6a958196de835170a01d84e4b"
+dependencies = [
+ "adler",
+ "autocfg",
+]
+
+[[package]]
+name = "nostd"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fa3dd4c68516f7c5a1838eda0de376d4bc3c2aba3893da0ca2cf400bbc18435f"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "noto-sans-mono-bitmap"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -317,10 +359,41 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1064d564ae026ae123bf5d607318b42a5b31d70a3c48e6ea7ee44cce4cdb095e"
 
 [[package]]
+name = "num_enum"
+version = "0.5.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f646caf906c20226733ed5b1374287eb97e3c2a5c227ce668c1f2ce20ae57c9"
+dependencies = [
+ "num_enum_derive",
+]
+
+[[package]]
+name = "num_enum_derive"
+version = "0.5.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dcbff9bc912032c62bf65ef1d5aea88983b420f4f839db1e9b0c281a25c9c799"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "paste"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
+
+[[package]]
+name = "png-decoder"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e3e93d4884a2609f2dccbafabd3e25c49e89bb872ab84bfea60feaf17615944"
+dependencies = [
+ "crc32fast",
+ "miniz_oxide",
+ "num_enum",
+]
 
 [[package]]
 name = "ppv-lite86"

@@ -29,8 +29,7 @@ impl IOApic {
     pub fn new(addr: u64) -> Self {
         Self {
             addr: unsafe {
-                crate::arch::x86::memory::physical_to_virtual(PhysAddr::new(addr))
-                    .as_u64()
+                crate::arch::x86::memory::physical_to_virtual(PhysAddr::new(addr)).as_u64()
             },
             ioapic: None,
         }
@@ -65,8 +64,7 @@ impl LApic {
     pub fn new(addr: u64) -> Self {
         Self {
             addr: unsafe {
-                crate::arch::x86::memory::physical_to_virtual(PhysAddr::new(addr))
-                    .as_u64()
+                crate::arch::x86::memory::physical_to_virtual(PhysAddr::new(addr)).as_u64()
             },
             lapic: None,
         }

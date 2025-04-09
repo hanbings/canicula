@@ -4,10 +4,14 @@ pub mod page_allocator;
 extern crate alloc;
 use alloc::vec::Vec;
 
-use log::info;
 use lazy_static::lazy_static;
+use log::info;
 use spin::Once;
-use x86_64::{registers::control::Cr3, structures::paging::{page_table::FrameError, PageTable}, PhysAddr, VirtAddr};
+use x86_64::{
+    registers::control::Cr3,
+    structures::paging::{page_table::FrameError, PageTable},
+    PhysAddr, VirtAddr,
+};
 
 lazy_static! {
     static ref PHYSICAL_MEMORY_OFFSET: Once<VirtAddr> = Once::new();
