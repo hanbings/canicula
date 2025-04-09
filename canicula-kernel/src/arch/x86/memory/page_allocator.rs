@@ -1,9 +1,6 @@
 use bootloader_api::info::{MemoryRegionKind, MemoryRegions};
-use lazy_static::lazy_static;
 use log::debug;
-use spin::Once;
 use x86_64::registers::control::Cr3;
-use x86_64::structures::paging::page_table::FrameError;
 use x86_64::structures::paging::{FrameAllocator, OffsetPageTable, PageTable, PhysFrame, Size4KiB};
 use x86_64::{PhysAddr, VirtAddr};
 
@@ -37,10 +34,6 @@ unsafe impl FrameAllocator<Size4KiB> for AbyssFrameAllocator {
     }
 }
 
-lazy_static! {
-    static ref PHYSICAL_MEMORY_OFFSET: Once<VirtAddr> = Once::new();
-}
-
 pub unsafe fn active_level_4_table(physical_memory_offset: VirtAddr) -> &'static mut PageTable {
     let (level_4_table_frame, _) = Cr3::read();
 
@@ -49,43 +42,6 @@ pub unsafe fn active_level_4_table(physical_memory_offset: VirtAddr) -> &'static
     let page_table_ptr: *mut PageTable = virt.as_mut_ptr();
 
     unsafe { &mut *page_table_ptr }
-}
-
-#[allow(dead_code)]
-pub unsafe fn physical_to_virtual(addr: PhysAddr) -> VirtAddr {
-    let phys = PHYSICAL_MEMORY_OFFSET.get().unwrap();
-    VirtAddr::new(phys.as_u64() + addr.as_u64())
-}
-
-#[allow(dead_code)]
-pub unsafe fn virtual_to_physical(
-    addr: VirtAddr,
-    physical_memory_offset: VirtAddr,
-) -> Option<PhysAddr> {
-    let (level_4_table_frame, _) = Cr3::read();
-
-    let table_indexes = [
-        addr.p4_index(),
-        addr.p3_index(),
-        addr.p2_index(),
-        addr.p1_index(),
-    ];
-    let mut frame = level_4_table_frame;
-
-    for &index in &table_indexes {
-        let virt = physical_memory_offset + frame.start_address().as_u64();
-        let table_ptr: *const PageTable = virt.as_ptr();
-        let table = unsafe { &*table_ptr };
-
-        let entry = &table[index];
-        frame = match entry.frame() {
-            Ok(frame) => frame,
-            Err(FrameError::FrameNotPresent) => return None,
-            Err(FrameError::HugeFrame) => panic!("huge pages not supported"),
-        };
-    }
-
-    Some(frame.start_address() + u64::from(addr.page_offset()))
 }
 
 pub fn init(
@@ -99,8 +55,6 @@ pub fn init(
 
     let physical_memory_offset =
         VirtAddr::new(boot_info.physical_memory_offset.into_option().unwrap());
-
-    PHYSICAL_MEMORY_OFFSET.call_once(|| physical_memory_offset);
 
     let l4_table = unsafe { active_level_4_table(physical_memory_offset) };
 

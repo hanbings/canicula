@@ -6,7 +6,6 @@ use log::*;
 use crate::{println, serial_println};
 
 mod acpi;
-mod allocator;
 mod apic;
 mod bga;
 mod console;
@@ -38,8 +37,7 @@ pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
     crate::arch::x86::gdt::init();
     info!("Interrupts initialized");
 
-    let (mut mapper, mut frame_allocator, boot_info) = crate::arch::x86::memory::init(boot_info);
-    let _ = crate::arch::x86::allocator::init(&mut mapper, &mut frame_allocator);
+    let boot_info = crate::arch::x86::memory::init(boot_info);
     info!("Memory initialized");
 
     crate::arch::x86::acpi::init(boot_info.rsdp_addr.as_ref().unwrap());
@@ -60,9 +58,6 @@ pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
     info!("Hello from the x86_64 kernel!");
     info!("This is the last message from the kernel.");
 
-    let vec = alloc::vec![1, 1, 4, 5, 1, 4];
-    let hello = alloc::string::String::from("Hello");
-
     bga_set_video_mode(600, 800, VBE_DISPI_BPP_32 as u32, true, true);
     bga_set_bank(0);
 
@@ -78,8 +73,15 @@ pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
         }
     }
 
+    let big: alloc::vec::Vec<i32> = alloc::vec::Vec::with_capacity(1024);
+    let vec = alloc::vec![1, 1, 4, 5, 1, 4];
+    let hello = alloc::string::String::from("Hello");
+
+    debug!("{:?}", big.len());
     debug!("{:?}", vec);
-    debug!("{:?} from the x86_64 kernel!", hello);
+    debug!("{:?} from the x86_64 kernel alloctor!", hello);
+
+    crate::arch::x86::memory::alloc_test();
 
     loop {
         x86_64::instructions::hlt();

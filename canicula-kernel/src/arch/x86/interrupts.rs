@@ -190,7 +190,6 @@ pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: Interrupt
     warn!("Keyboard scancode: {}", scancode);
     if scancode == 28 {
         crate::arch::x86::acpi::shutdown();
-        crate::arch::x86::qemu::exit_qemu(0x10);
     }
 
     unsafe {

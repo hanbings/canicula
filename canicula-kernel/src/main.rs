@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![allow(dead_code)]
 #![cfg_attr(
     any(target_arch = "x86", target_arch = "x86_64"),
     feature(abi_x86_interrupt)

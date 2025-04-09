@@ -1,5 +1,5 @@
 use linked_list_allocator::LockedHeap;
-use log::error;
+use log::{debug, error};
 use x86_64::{
     structures::paging::{
         mapper::MapToError, FrameAllocator, Mapper, Page, PageTableFlags, Size4KiB,
@@ -11,7 +11,7 @@ extern crate alloc;
 use core::alloc::Layout;
 
 pub const HEAP_START: usize = 0x_ffff_a000_0000_0000;
-pub const HEAP_SIZE: usize = 100 * 1024;
+pub const HEAP_SIZE: usize = 16 * 1024 * 1024;
 
 #[alloc_error_handler]
 fn alloc_error_handler(layout: Layout) -> ! {
@@ -49,6 +49,10 @@ pub fn init(
         let heap_start = HEAP_START as *mut u8;
         let heap_size = HEAP_SIZE;
 
+        debug!(
+            "Heap start: {:#x}, size: {}",
+            heap_start as usize, heap_size
+        );
         ALLOCATOR.lock().init(heap_start, heap_size);
     }
 
