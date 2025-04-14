@@ -6,21 +6,21 @@ use log::*;
 use crate::{println, serial_println};
 
 mod acpi;
+mod memory;
+mod virtualization;
+
 mod apic;
 mod bga;
 mod console;
 mod gdt;
 mod interrupts;
 mod logging;
-mod memory;
 mod pcie;
 mod process;
 mod qemu;
 mod serial;
 
 extern crate alloc;
-
-static LOGO: &'static [u8] = include_bytes!("../../../../resources/images/logo.png");
 
 #[panic_handler]
 pub fn panic(info: &PanicInfo) -> ! {
@@ -60,7 +60,7 @@ pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
     info!("Hello from the x86_64 kernel!");
     info!("This is the last message from the kernel.");
 
-    let logo = png_decoder::decode(LOGO).unwrap();
+    let logo = png_decoder::decode(crate::resources::LOGO).unwrap();
     let width = logo.0.width;
     let height = logo.0.height;
     let pixels = logo.1;
@@ -87,11 +87,9 @@ pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
         }
     }
 
-    let big: alloc::vec::Vec<i32> = alloc::vec::Vec::with_capacity(1024);
     let vec = alloc::vec![1, 1, 4, 5, 1, 4];
     let hello = alloc::string::String::from("Hello");
 
-    debug!("{:?}", big.len());
     debug!("{:?}", vec);
     debug!("{:?} from the x86_64 kernel alloctor!", hello);
 

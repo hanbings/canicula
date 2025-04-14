@@ -7,7 +7,6 @@ const EXIT_FAILURE_FLAG: u32 = 0x3333;
 const EXIT_FAILURE: u32 = exit_code_encode(1); // Equals `exit(1)`. qemu failed exit
 const EXIT_RESET: u32 = 0x7777; // qemu reset
 
-#[allow(dead_code)]
 pub trait QEMUExit {
     /// Exit with specified return code.
     ///

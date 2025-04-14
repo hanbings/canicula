@@ -13,7 +13,6 @@ lazy_static! {
     pub static ref CONSOLE: Mutex<Option<NotoFontDisplay>> = Mutex::new(None);
 }
 
-#[allow(dead_code)]
 pub struct NotoFontDisplay {
     width: usize,
     height: usize,
@@ -103,7 +102,6 @@ impl NotoFontDisplay {
         }
     }
 
-    #[allow(dead_code)]
     pub fn clear(&mut self) {
         for pixel in self.draw_buffer.iter_mut() {
             *pixel = 0;

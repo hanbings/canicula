@@ -31,36 +31,49 @@ pub static TSS: Lazy<TaskStateSegment> = Lazy::new(|| {
     tss
 });
 
-pub static GDT: Lazy<(GlobalDescriptorTable, Selectors)> = Lazy::new(|| {
+pub static GDT: Lazy<Gdt> = Lazy::new(|| {
     let mut gdt = GlobalDescriptorTable::new();
-    let code_selector = gdt.append(Descriptor::kernel_code_segment());
-    let data_selector = gdt.append(Descriptor::kernel_data_segment());
+    let kernel_code_selector = gdt.append(Descriptor::kernel_code_segment());
+    let kernel_data_selector = gdt.append(Descriptor::kernel_data_segment());
+    let user_code_selector = gdt.append(Descriptor::user_code_segment());
+    let user_data_selector = gdt.append(Descriptor::user_data_segment());
     let tss_selector = gdt.append(Descriptor::tss_segment(&TSS));
-    (
+
+    Gdt {
         gdt,
-        Selectors {
-            code_selector,
-            data_selector,
-            tss_selector,
+        tss_selector,
+        kernel: Selectors {
+            code_selector: kernel_code_selector,
+            data_selector: kernel_data_selector,
         },
-    )
+        user: Selectors {
+            code_selector: user_code_selector,
+            data_selector: user_data_selector,
+        },
+    }
 });
+
+pub struct Gdt {
+    pub gdt: GlobalDescriptorTable,
+    pub tss_selector: SegmentSelector,
+    pub kernel: Selectors,
+    pub user: Selectors,
+}
 
 pub struct Selectors {
     pub code_selector: SegmentSelector,
     pub data_selector: SegmentSelector,
-    pub tss_selector: SegmentSelector,
 }
 
 pub fn init() {
     use x86_64::instructions::segmentation::{Segment, CS, DS, SS};
     use x86_64::instructions::tables::load_tss;
 
-    GDT.0.load();
+    GDT.gdt.load();
     unsafe {
-        CS::set_reg(GDT.1.code_selector);
-        DS::set_reg(GDT.1.data_selector);
-        SS::set_reg(GDT.1.data_selector);
-        load_tss(GDT.1.tss_selector);
+        CS::set_reg(GDT.kernel.code_selector);
+        DS::set_reg(GDT.kernel.data_selector);
+        SS::set_reg(GDT.kernel.data_selector);
+        load_tss(GDT.tss_selector);
     }
 }

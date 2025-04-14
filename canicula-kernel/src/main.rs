@@ -9,6 +9,7 @@
 
 mod arch;
 mod types;
+mod resources;
 
 #[no_mangle]
 #[cfg(target_arch = "riscv64")]

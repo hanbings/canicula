@@ -17,7 +17,6 @@ impl InterruptIndex {
         self as u8
     }
 
-    #[allow(dead_code)]
     pub fn as_usize(self) -> usize {
         usize::from(self.as_u8())
     }

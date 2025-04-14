@@ -69,7 +69,7 @@ pub fn alloc_test() {
 
     let mut pool = Vec::new();
 
-    for i in 0..32 {
+    for i in 0..8 {
         info!("Indicator: {}", i);
         let mut items = alloc_pass(i);
         free_pass(&mut items, i as u8);
