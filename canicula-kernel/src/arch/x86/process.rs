@@ -61,7 +61,7 @@ pub struct ProcessControlBlock {
 }
 
 impl ProcessControlBlock {
-    pub fn new(entry_point: usize) -> Self{
+    pub fn new(entry_point: usize) -> Self {
         ProcessControlBlock {
             process_id: 0,
             process_state: ProcessState::Running,

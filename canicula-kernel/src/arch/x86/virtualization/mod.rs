@@ -1,6 +1,6 @@
 // intel virtualization
-pub mod vmx;
 pub mod vmcs;
+pub mod vmx;
 
 // amd virtualization
 pub mod svm;
