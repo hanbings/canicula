@@ -1,25 +1,13 @@
 [workspace]
 resolver = "2"
 members = [
-    "bootloader/uefi",
-    "bootloader/api",
-    "bootloader/common",
-    "bootloader/common/config",
-
-    "canicula-common",
-    "canicula-ext4",
-    "canicula-kernel",
-    "canicula-libs",
+    "canicula-kernel"
 ]
 
 [workspace.dependencies]
-bootloader_api = { version = "0.11.8", path = "bootloader/api" }
-bootloader-x86_64-common = { version = "0.11.8", path = "bootloader/common" }
-bootloader-boot-config = { version = "0.11.8", path = "bootloader/common/config" }
-bootloader-x86_64-bios-common = { version = "0.11.8", path = "bootloader/bios/common" }
 
 [workspace.package]
-version = "0.11.8"
+version = "0.0.0"
 authors = ["hanbings hanbings@hanbings.io"]
 repository = "https://github.com/hanbings/canicula"
 license = "MIT"
