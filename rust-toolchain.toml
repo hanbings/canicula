@@ -1,12 +1,8 @@
 [toolchain]
 profile = "default"
-channel = "nightly-2024-12-17"
+channel = "nightly"
 components = ["rust-src", "llvm-tools-preview", "rustfmt", "clippy"]
 targets = [
     "x86_64-unknown-uefi",
-    "aarch64-unknown-uefi",
-    "x86_64-unknown-none",
-    "aarch64-unknown-none",
-    "riscv64gc-unknown-none-elf",
-    "x86_64-unknown-linux-gnu",
+    "aarch64-unknown-uefi"
 ]

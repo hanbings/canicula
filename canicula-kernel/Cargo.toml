@@ -12,6 +12,6 @@ path = "src/main.rs"
 
 [dependencies]
 log = "0.4"
-x86_64 = "0.15.2"
 xmas-elf = "0.10.0"
-uefi = { version = "0.35.0", features = [ "panic_handler", "logger" ] }
+uefi = { version = "0.35.0", features = [ "panic_handler", "logger", "alloc", "global_allocator"] }
+wasmi = { version = "0.47.0", default-features = false }
