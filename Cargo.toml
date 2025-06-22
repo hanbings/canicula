@@ -1,21 +1,22 @@
 [workspace]
-resolver = "2"
 members = [
-    "canicula-kernel"
+    "canicula-kernel",
+    "hello-wasm",
 ]
-
-[workspace.dependencies]
+resolver = "2"
 
 [workspace.package]
 version = "0.0.0"
 authors = ["hanbings hanbings@hanbings.io"]
-repository = "https://github.com/hanbings/canicula"
 license = "MIT"
+repository = "https://github.com/hanbings/canicula"
 
-[profile.release]
-debug = true
-panic = "unwind"
+[workspace.dependencies]
 
 [profile.dev]
-debug = true
+debug = 2
+panic = "unwind"
+
+[profile.release]
+debug = 2
 panic = "unwind"

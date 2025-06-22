@@ -5,3 +5,8 @@
 ## ⭐ Canicula OS
 
 本分支为特别版本 Canicula OS Echo 开发分支
+
+```bash
+cargo build -p hello-wasm --target wasm32-unknown-unknown --release
+make
+```

@@ -2,22 +2,15 @@
 #![no_std]
 
 use log::*;
-use wasmi::*;
 use uefi::prelude::*;
+use wasmi::{Caller, Engine, Linker, Module, Store};
 
 #[entry]
 fn main() -> Status {
     uefi::helpers::init().unwrap();
     info!("Hello world!");
 
-    let wasm = r#"
-        (module
-            (import "host" "hello" (func $host_hello (param i32)))
-            (func (export "hello")
-                (call $host_hello (i32.const 3))
-            )
-        )
-    "#;
+    let wasm = include_bytes!("/home/hanbings/github/canicula/target/wasm32-unknown-unknown/release/hello_wasm.wasm");
 
     let engine = Engine::default();
     let module = Module::new(&engine, wasm).unwrap();
@@ -37,7 +30,7 @@ fn main() -> Status {
         .unwrap();
 
     instance
-        .get_typed_func::<(), ()>(&store, "hello")
+        .get_typed_func::<(), ()>(&store, "call_host")
         .unwrap()
         .call(&mut store, ())
         .unwrap();
