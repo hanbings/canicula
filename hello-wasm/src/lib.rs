@@ -3,7 +3,7 @@
 
 #[link(wasm_import_module = "host")]
 extern "C" {
-    fn hello(x: i32);
+    fn hello(x: i32) -> i32;
 }
 
 #[no_mangle]
