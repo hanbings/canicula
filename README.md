@@ -4,24 +4,26 @@
 
 ## ⭐ Canicula OS
 
-本分支为 [Rust：使用 uefi-rs 编写一个 UEFI 应用并加载内核](https://blog.hanbings.io/posts/rust-uefi-bootloader) 的示例代码。
-
 ### 编译运行
 
 > 注意替换 `$(OVMF_CODE_PATH)` 和 `$(OVMF_VARS_PATH)`
 > 
 
 ```bash
-cargo build --bin canicula-efi --target x86_64-unknown-uefi
-mkdir -p esp/efi/boot/
-cp target/x86_64-unknown-uefi/debug/canicula-efi.efi esp/efi/boot/bootx64.efi
+cargo build -Z build-std=core,alloc,compiler_builtins -p canicula-efi --release --target x86_64-unknown-uefi
+cargo build -Z build-std=core,alloc,compiler_builtins -Z json-target-spec -p canicula-kernel --release --target canicula-kernel/x86_64-canicula-kernel.json
 
-nasm kernel.asm -o esp/kernel
+cp target/x86_64-canicula-kernel/release/canicula-kernel esp/kernel
+cp target/x86_64-unknown-uefi/release/canicula-efi.efi esp/efi/boot/bootx64.efi
+
+echo "Build complete!"
 
 qemu-system-x86_64 \
-    -m 256 \
-    -enable-kvm \
-    -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \
-    -drive if=pflash,format=raw,readonly=on,file=$(OVMF_VARS_PATH) \
+    -m 256M \
+    -display none \
+    -serial mon:stdio \
+    -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
+    -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE_4M.fd \
+    -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_VARS_4M.fd \
     -drive format=raw,file=fat:rw:esp
 ```

@@ -1,13 +1,17 @@
 [workspace]
 resolver = "2"
 members = [
-    "canicula-efi",
+    "canicula-efi", "canicula-kernel",
 ]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
 
 [profile.release]
 debug = true
-panic = "unwind"
+panic = "abort"
 
 [profile.dev]
 debug = true
-panic = "unwind"
+panic = "abort"

@@ -1,0 +1,11 @@
+[package]
+name = "canicula-kernel"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "canicula-kernel"
+path = "src/main.rs"
+
+[dependencies]
+spin = "0.10.0"

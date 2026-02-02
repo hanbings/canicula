@@ -1,5 +1,5 @@
 [toolchain]
 profile = "default"
-# use the nightly version of the last stable toolchain, see <https://forge.rust-lang.org/>
-channel = "nightly-2024-12-17"
+# Pin to a specific nightly for reproducible builds.
+channel = "nightly-2026-02-02"
 components = ["rust-src", "llvm-tools-preview", "rustfmt", "clippy"]

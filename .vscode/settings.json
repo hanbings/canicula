@@ -1,7 +1,12 @@
 {
-    "rust-analyzer.cargo.target": "x86_64-unknown-uefi",
+    "rust-analyzer.cargo.target": "x86_64-unknown-none",
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml",
         "./canicula-efi/Cargo.toml",
+        "./canicula-kernel/Cargo.toml",
+    ],
+    "rust-analyzer.runnables.extraArgs": [
+        "--target=x86_64-unknown-none",
+        "-Zbuild-std=std,panic_abort",
     ],
 }
