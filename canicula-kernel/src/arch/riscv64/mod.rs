@@ -1,7 +1,7 @@
 use core::arch::global_asm;
 use log::*;
-use qemu::QEMUExit;
 use qemu::QEMU_EXIT_HANDLE;
+use qemu::QEMUExit;
 
 use crate::println;
 

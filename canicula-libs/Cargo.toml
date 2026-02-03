@@ -1,7 +1,11 @@
 [package]
 name = "canicula-libs"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
 
 [lib]
 name = "canicula_libs"

@@ -1,7 +1,11 @@
 [package]
 name = "canicula-kernel"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
 
 [[bin]]
 name = "canicula-kernel"
@@ -10,26 +14,25 @@ path = "src/main.rs"
 [dependencies]
 log = "0.4.27"
 spin = "0.10.0"
-bootloader_api = "0.11.8"
-noto-sans-mono-bitmap = { version = "0.3.1", features = [ "font_weights_all", "raster_heights_all"] }
+bootloader_api = { workspace = true }
+noto-sans-mono-bitmap = { workspace = true, features = ["font_weights_all", "raster_heights_all"] }
+canicula-common = { workspace = true }
 
-canicula-common = { path = "../canicula-common" }
-
-[target.x86_64-unknown-none.dependencies]
+[target.x86_64-canicula-kernel.dependencies]
 aml = "0.16.4"
-acpi = "5.2.0"
+acpi = "6.0.1"
 x86 = "0.52.0"
 nostd = "0.1.4"
 x2apic = "0.5.0"
 x86_64 = "0.15.2"
-uart_16550 = "0.3.2"
-png-decoder = "0.1.1"
+uart_16550 = "0.4.0"
+png-decoder = "0.2.0"
 conquer-once = { version = "0.4.0", default-features = false }
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 linked_list_allocator = "0.10.5"
 
-[target.aarch64-unknown-none.dependencies]
+[target.aarch64-canicula-kernel.dependencies]
 
-[target.riscv64gc-unknown-none-elf.dependencies]
+[target.riscv64gc-canicula-kernel.dependencies]
 sbi-rt = { version = "0.0.3", features = ["legacy"] }
-riscv = "0.13.0"
+riscv = "0.16.0"

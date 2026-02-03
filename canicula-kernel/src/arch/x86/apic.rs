@@ -1,4 +1,7 @@
-use acpi::{AcpiTables, InterruptModel};
+use acpi::{
+    AcpiTables,
+    platform::{AcpiPlatform, InterruptModel},
+};
 use conquer_once::spin::OnceCell;
 use log::debug;
 use spin::{Mutex, Once};
@@ -10,7 +13,7 @@ use x2apic::{
     ioapic::{IoApic, IrqMode, RedirectionTableEntry},
     lapic::{LocalApic, LocalApicBuilder},
 };
-use x86_64::{instructions::port::Port, PhysAddr};
+use x86_64::{PhysAddr, instructions::port::Port};
 
 pub static IOAPIC: Once<Mutex<Vec<IOApic>>> = Once::new();
 pub static mut LAPIC: OnceCell<Mutex<LApic>> = OnceCell::uninit();
@@ -44,14 +47,16 @@ impl IOApic {
     #[allow(clippy::missing_safety_doc)]
     pub unsafe fn enable(&mut self) {
         if let Some(ioapic) = self.ioapic.as_mut() {
-            ioapic.init(32);
-            let mut entry = RedirectionTableEntry::default();
-            entry.set_mode(IrqMode::Fixed);
-            entry.set_vector(33);
-            entry.set_dest(0);
+            unsafe {
+                ioapic.init(32);
+                let mut entry = RedirectionTableEntry::default();
+                entry.set_mode(IrqMode::Fixed);
+                entry.set_vector(33);
+                entry.set_dest(0);
 
-            ioapic.set_table_entry(1, entry);
-            ioapic.enable_irq(1);
+                ioapic.set_table_entry(1, entry);
+                ioapic.enable_irq(1);
+            }
         }
     }
 
@@ -140,15 +145,10 @@ pub fn init_ioapic(ioapic_addr: u64) {
 }
 
 pub fn init(rsdp_addr: &u64) {
-    let tables = unsafe {
-        AcpiTables::from_rsdp(
-            crate::arch::x86::acpi::handler::AcpiHandler,
-            *rsdp_addr as usize,
-        )
-        .unwrap()
-    };
-    let platform_info = tables.platform_info().unwrap();
-    let interrupt_model = platform_info.interrupt_model;
+    let handler = crate::arch::x86::acpi::handler::AcpiHandler;
+    let tables = unsafe { AcpiTables::from_rsdp(handler, *rsdp_addr as usize).unwrap() };
+    let platform = AcpiPlatform::new(tables, handler).unwrap();
+    let interrupt_model = platform.interrupt_model;
 
     debug!("Interrupt Model: {:?}", interrupt_model);
 

@@ -3,9 +3,9 @@ use core::fmt::Write;
 use bootloader_api::info::FrameBuffer;
 
 use lazy_static::lazy_static;
-use noto_sans_mono_bitmap::get_raster;
 use noto_sans_mono_bitmap::FontWeight;
 use noto_sans_mono_bitmap::RasterHeight;
+use noto_sans_mono_bitmap::get_raster;
 use spin::Mutex;
 use x86_64::instructions::interrupts;
 

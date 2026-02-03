@@ -1,11 +1,15 @@
 [package]
 name = "canicula-ext4"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
 
 [lib]
 name = "canicula_ext4"
 path = "src/ext4.rs"
 
 [dependencies]
-canicula-common = { path = "../canicula-common" }
+canicula-common = { workspace = true }

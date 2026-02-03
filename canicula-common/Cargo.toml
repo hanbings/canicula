@@ -1,14 +1,18 @@
 [package]
 name = "canicula-common"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
 
 [lib]
 name = "canicula_common"
 path = "src/libs.rs"
 
 [dependencies]
-noto-sans-mono-bitmap = "0.3.1"
+noto-sans-mono-bitmap = { workspace = true }
 
 [target.x86_64-unknown-uefi.dependencies]
 uefi = { version = "0.28.0", features = ["logger", "panic_handler"] }

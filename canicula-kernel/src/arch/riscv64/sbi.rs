@@ -1,4 +1,4 @@
-use sbi_rt::{system_reset, NoReason, Shutdown, SystemFailure};
+use sbi_rt::{NoReason, Shutdown, SystemFailure, system_reset};
 
 pub fn console_write_byte(c: usize) {
     #[allow(deprecated)]

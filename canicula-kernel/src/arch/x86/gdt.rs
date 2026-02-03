@@ -1,8 +1,8 @@
 use spin::Lazy;
 
+use x86_64::VirtAddr;
 use x86_64::structures::gdt::{Descriptor, GlobalDescriptorTable, SegmentSelector};
 use x86_64::structures::tss::TaskStateSegment;
-use x86_64::VirtAddr;
 
 use core::ptr::addr_of;
 
@@ -66,7 +66,7 @@ pub struct Selectors {
 }
 
 pub fn init() {
-    use x86_64::instructions::segmentation::{Segment, CS, DS, SS};
+    use x86_64::instructions::segmentation::{CS, DS, SS, Segment};
     use x86_64::instructions::tables::load_tss;
 
     GDT.gdt.load();

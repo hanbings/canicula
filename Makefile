@@ -25,14 +25,23 @@ $(info OVMF_VARS_PATH=$(OVMF_VARS_PATH))
 all: efi kernel
 
 efi:
-	cd bootloader/uefi && cargo build --target x86_64-unknown-uefi --release -Zbuild-std=core -Zbuild-std-features=compiler-builtins-mem
+	cd bootloader/uefi && cargo build \
+		-Zbuild-std=core \
+		-Zbuild-std-features=compiler-builtins-mem \
+		--release \
+		--target x86_64-unknown-uefi
 	mkdir -p esp/efi/boot/
 	cp bootloader/target/x86_64-unknown-uefi/release/bootloader-x86_64-uefi.efi esp/efi/boot/bootx64.efi
 
 kernel:
-	LOG_LEVEL=$(LOG_LEVEL) cargo build --bin canicula-kernel --target x86_64-unknown-none
+	LOG_LEVEL=$(LOG_LEVEL) cargo build \
+	    -Z build-std=core,alloc,compiler_builtins \
+	    -Z build-std-features=compiler-builtins-mem \
+		-Z json-target-spec -p canicula-kernel \
+		--release \
+		--target canicula-kernel/x86_64-canicula-kernel.json
 	mkdir -p esp
-	cp target/x86_64-unknown-none/debug/canicula-kernel esp/kernel-x86_64
+	cp target/x86_64-canicula-kernel/release/canicula-kernel esp/kernel-x86_64
 
 clean:
 	rm -rf target

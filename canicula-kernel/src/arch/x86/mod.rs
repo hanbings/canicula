@@ -1,6 +1,6 @@
 use core::panic::PanicInfo;
 
-use bga::{bga_set_bank, bga_set_video_mode, VBE_DISPI_BPP_32};
+use bga::{VBE_DISPI_BPP_32, bga_set_bank, bga_set_video_mode};
 use log::*;
 
 use crate::{println, serial_println};
@@ -55,7 +55,9 @@ pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
     println!("Hello from the x86_64 kernel!");
     println!("More debug info will be display in the serial console.");
     println!("Press Enter to poweroff.");
-    serial_println!("If you can't see more content here, you need to specify LOG_LEVEL env at compile time to enable higher level log filtering.");
+    serial_println!(
+        "If you can't see more content here, you need to specify LOG_LEVEL env at compile time to enable higher level log filtering."
+    );
 
     info!("Hello from the x86_64 kernel!");
     info!("This is the last message from the kernel.");
@@ -73,10 +75,11 @@ pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
         for y in 0..height {
             for x in 0..width {
                 let index = y * width + x;
-                let r = pixels[(index * 4) as usize];
-                let g = pixels[(index * 4 + 1) as usize];
-                let b = pixels[(index * 4 + 2) as usize];
-                let a = pixels[(index * 4 + 3) as usize];
+                let pixel = pixels[index as usize];
+                let r = pixel[0];
+                let g = pixel[1];
+                let b = pixel[2];
+                let a = pixel[3];
                 let color = ((r as u32) << 16) | ((g as u32) << 8) | (b as u32);
                 if a > 0 {
                     *framebuffer.offset(index as isize) = color;

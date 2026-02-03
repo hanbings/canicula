@@ -5,6 +5,7 @@ members = [
     "bootloader/api",
     "bootloader/common",
     "bootloader/common/config",
+    "bootloader/bios/common",
 
     "canicula-common",
     "canicula-ext4",
@@ -18,8 +19,17 @@ bootloader-x86_64-common = { version = "0.11.8", path = "bootloader/common" }
 bootloader-boot-config = { version = "0.11.8", path = "bootloader/common/config" }
 bootloader-x86_64-bios-common = { version = "0.11.8", path = "bootloader/bios/common" }
 
+# canicula internal crates
+canicula-common = { path = "canicula-common" }
+canicula-ext4 = { path = "canicula-ext4" }
+canicula-libs = { path = "canicula-libs" }
+
+# shared external deps (centralize versions)
+noto-sans-mono-bitmap = "0.3.1"
+
 [workspace.package]
 version = "0.11.8"
+edition = "2024"
 authors = ["hanbings hanbings@hanbings.io"]
 repository = "https://github.com/hanbings/canicula"
 license = "MIT"

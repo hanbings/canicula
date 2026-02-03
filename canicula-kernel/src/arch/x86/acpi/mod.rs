@@ -1,11 +1,11 @@
 pub mod handler;
 
-use acpi::{fadt::Fadt, AcpiTables};
+use acpi::{AcpiTables, sdt::fadt::Fadt};
 use aml::{AmlContext, AmlName, AmlValue, DebugVerbosity};
 use lazy_static::lazy_static;
-use log::debug;
+use log::{debug, error, warn};
 use spin::Mutex;
-use x86_64::{instructions::port::Port, PhysAddr};
+use x86_64::{PhysAddr, instructions::port::Port};
 
 extern crate alloc;
 use alloc::boxed::Box;
@@ -15,6 +15,7 @@ pub struct AcpiShutdown {
     pub pm1a_control_block: u64,
     pub slp_typ_a: u16,
     pub slp_len: u16,
+    pub use_qemu_fallback: bool,
 }
 
 lazy_static! {
@@ -22,57 +23,108 @@ lazy_static! {
         pm1a_control_block: 0,
         slp_typ_a: 0,
         slp_len: 0,
+        use_qemu_fallback: true,
     });
 }
 
 pub fn init(rsdp_addr: &u64) {
-    let tables = unsafe {
+    let tables = match unsafe {
         AcpiTables::from_rsdp(
             crate::arch::x86::acpi::handler::AcpiHandler,
             *rsdp_addr as usize,
         )
-        .unwrap()
+    } {
+        Ok(t) => t,
+        Err(e) => {
+            error!("Failed to parse ACPI tables: {:?}", e);
+            warn!("Using QEMU fallback for shutdown");
+            return;
+        }
     };
 
-    let dsdt = tables
-        .dsdt()
-        .unwrap_or_else(|_| panic!("Failed to get DSDT table"));
-    let fadt = tables
-        .find_table::<Fadt>()
-        .unwrap_or_else(|_| panic!("Failed to get FADT table"));
+    let dsdt = match tables.dsdt() {
+        Ok(d) => d,
+        Err(e) => {
+            error!("Failed to get DSDT table: {:?}", e);
+            warn!("Using QEMU fallback for shutdown");
+            return;
+        }
+    };
 
-    let pm1a_control_block = fadt.pm1a_control_block().unwrap();
+    let fadt = match tables.find_table::<Fadt>() {
+        Some(f) => f,
+        None => {
+            error!("Failed to get FADT table");
+            warn!("Using QEMU fallback for shutdown");
+            return;
+        }
+    };
+
+    let pm1a_control_block = match fadt.pm1a_control_block() {
+        Ok(p) => p,
+        Err(e) => {
+            error!("PM1A control block not found in FADT: {:?}", e);
+            warn!("Using QEMU fallback for shutdown");
+            return;
+        }
+    };
+
+    // Try to parse AML and get S5 sleep type
     let slp_typ_a = {
         let table = unsafe {
-            let ptr =
-                crate::arch::x86::memory::physical_to_virtual(PhysAddr::new(dsdt.address as u64));
+            let ptr = crate::arch::x86::memory::physical_to_virtual(PhysAddr::new(
+                dsdt.phys_address as u64,
+            ));
             core::slice::from_raw_parts(ptr.as_ptr(), dsdt.length as usize)
         };
 
         let handler = Box::new(crate::arch::x86::acpi::handler::AmlHandler);
         let mut aml = AmlContext::new(handler, DebugVerbosity::None);
 
-        let name = AmlName::from_str("\\_S5").unwrap();
-        aml.parse_table(table).unwrap();
+        if let Err(e) = aml.parse_table(table) {
+            error!("Failed to parse AML stream. Err = {:?}", e);
+            warn!("Using QEMU fallback for shutdown");
+            return;
+        }
 
-        let s5 = match aml.namespace.get_by_path(&name).unwrap() {
-            AmlValue::Package(p) => p,
-            _ => panic!("\\_S5 is not a Package"),
+        let name = match AmlName::from_str("\\_S5") {
+            Ok(n) => n,
+            Err(e) => {
+                error!("Failed to create AML name: {:?}", e);
+                warn!("Using QEMU fallback for shutdown");
+                return;
+            }
         };
 
-        let value = match s5[0] {
-            AmlValue::Integer(v) => v as u16,
-            _ => panic!("\\_S5[0] is not an Integer"),
-        };
-
-        value
+        match aml.namespace.get_by_path(&name) {
+            Ok(AmlValue::Package(p)) => match p.first() {
+                Some(AmlValue::Integer(v)) => *v as u16,
+                _ => {
+                    error!("\\_S5[0] is not an Integer");
+                    warn!("Using QEMU fallback for shutdown");
+                    return;
+                }
+            },
+            Ok(_) => {
+                error!("\\_S5 is not a Package");
+                warn!("Using QEMU fallback for shutdown");
+                return;
+            }
+            Err(e) => {
+                error!("Failed to get \\_S5: {:?}", e);
+                warn!("Using QEMU fallback for shutdown");
+                return;
+            }
+        }
     };
+
     let slp_len = 1 << 13;
 
     *ACPI_SHUTDOWN.lock() = AcpiShutdown {
         pm1a_control_block: pm1a_control_block.address,
         slp_typ_a,
         slp_len,
+        use_qemu_fallback: false,
     };
 
     debug!("PM1A Control Block: {:#x}", pm1a_control_block.address);
@@ -81,12 +133,22 @@ pub fn init(rsdp_addr: &u64) {
 }
 
 pub fn shutdown() {
-    let pm1a_control_block = ACPI_SHUTDOWN.lock().pm1a_control_block;
-    let slp_typ_a = ACPI_SHUTDOWN.lock().slp_typ_a;
-    let slp_len = ACPI_SHUTDOWN.lock().slp_len;
+    let shutdown_info = ACPI_SHUTDOWN.lock();
 
-    unsafe {
-        let mut port: Port<u16> = Port::new(pm1a_control_block as u16);
-        port.write(slp_typ_a | slp_len);
+    if shutdown_info.use_qemu_fallback {
+        // QEMU exit: write to debug exit port (0xf4)
+        // Exit code will be (value << 1) | 1
+        debug!("Using QEMU debug exit for shutdown");
+        unsafe {
+            let mut port: Port<u32> = Port::new(0xf4);
+            port.write(0x10); // Exit code will be 0x21 (33)
+        }
+    } else {
+        // Use ACPI S5 sleep state for shutdown
+        debug!("Using ACPI S5 sleep for shutdown");
+        unsafe {
+            let mut port: Port<u16> = Port::new(shutdown_info.pm1a_control_block as u16);
+            port.write(shutdown_info.slp_typ_a | shutdown_info.slp_len);
+        }
     }
 }

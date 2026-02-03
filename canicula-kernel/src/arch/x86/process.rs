@@ -91,9 +91,9 @@ impl ProcessControlBlock {
     }
 }
 
-pub fn create_process(entry_point: usize) {}
-pub fn distory_process(pid: usize) {}
-pub fn switch_process(pid: usize) {}
-pub fn wait_process(pid: usize) {}
-pub fn exit_process(pid: usize, exit_code: usize) {}
+pub fn create_process(_entry_point: usize) {}
+pub fn distory_process(_pid: usize) {}
+pub fn switch_process(_pid: usize) {}
+pub fn wait_process(_pid: usize) {}
+pub fn exit_process(_pid: usize, _exit_code: usize) {}
 pub fn poll_process() {}

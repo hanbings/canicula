@@ -8,9 +8,9 @@ use lazy_static::lazy_static;
 use log::info;
 use spin::Once;
 use x86_64::{
-    registers::control::Cr3,
-    structures::paging::{page_table::FrameError, PageTable},
     PhysAddr, VirtAddr,
+    registers::control::Cr3,
+    structures::paging::{PageTable, page_table::FrameError},
 };
 
 lazy_static! {
