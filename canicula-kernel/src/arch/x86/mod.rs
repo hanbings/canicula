@@ -63,28 +63,34 @@ pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
     info!("This is the last message from the kernel.");
 
     let logo = png_decoder::decode(crate::resources::LOGO).unwrap();
-    let width = logo.0.width;
-    let height = logo.0.height;
+    let img_width = logo.0.width;
+    let img_height = logo.0.height;
     let pixels = logo.1;
 
-    bga_set_video_mode(width, height, VBE_DISPI_BPP_32 as u32, true, true);
+    bga_set_video_mode(img_width, img_height, VBE_DISPI_BPP_32 as u32, true, true);
     bga_set_bank(0);
 
+    let fb_info = boot_info.framebuffer.as_ref().unwrap().info();
+    // use stride for framebuffer offset calculation
+    let fb_stride = fb_info.stride;
     let framebuffer = boot_info.framebuffer.as_ref().unwrap().buffer().as_ptr() as *mut u32;
     unsafe {
-        for y in 0..height {
-            for x in 0..width {
-                let index = y * width + x;
-                let pixel = pixels[index as usize];
+        for y in 0..img_height {
+            for x in 0..img_width {
+                // source index uses image width
+                let src_index = (y * img_width + x) as usize;
+                // destination offset uses framebuffer stride
+                let dst_offset = (y as usize * fb_stride) + x as usize;
+                let pixel = pixels[src_index];
                 let r = pixel[0];
                 let g = pixel[1];
                 let b = pixel[2];
                 let a = pixel[3];
                 let color = ((r as u32) << 16) | ((g as u32) << 8) | (b as u32);
                 if a > 0 {
-                    *framebuffer.offset(index as isize) = color;
+                    *framebuffer.add(dst_offset) = color;
                 } else {
-                    *framebuffer.offset(index as isize) = 0x00000000;
+                    *framebuffer.add(dst_offset) = 0x00000000;
                 }
             }
         }

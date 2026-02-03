@@ -16,6 +16,8 @@ lazy_static! {
 pub struct NotoFontDisplay {
     width: usize,
     height: usize,
+    // pixels per row in memory (may include alignment padding)
+    stride: usize,
     draw_buffer: &'static mut [u32],
 
     font_weight: FontWeight,
@@ -29,8 +31,11 @@ pub fn init(frame_buffer: &mut FrameBuffer) {
     let buffer = frame_buffer.buffer_mut().as_ptr() as *mut u32;
     let width = frame_buffer.info().width;
     let height = frame_buffer.info().height;
+    // use stride instead of width for memory calculation
+    let stride = frame_buffer.info().stride;
 
-    for index in 0..(width * height) {
+    // use stride * height as buffer size
+    for index in 0..(stride * height) {
         unsafe {
             buffer.add(index as usize).write(0xff408deb);
         }
@@ -39,7 +44,8 @@ pub fn init(frame_buffer: &mut FrameBuffer) {
     let console = NotoFontDisplay::new(
         width as usize,
         height as usize,
-        unsafe { core::slice::from_raw_parts_mut(buffer, (width * height) as usize) },
+        stride as usize,
+        unsafe { core::slice::from_raw_parts_mut(buffer, (stride * height) as usize) },
         FontWeight::Light,
         RasterHeight::Size24,
     );
@@ -87,6 +93,7 @@ impl NotoFontDisplay {
     pub fn new(
         width: usize,
         height: usize,
+        stride: usize,
         draw_buffer: &'static mut [u32],
         font_weight: FontWeight,
         raster_height: RasterHeight,
@@ -94,6 +101,7 @@ impl NotoFontDisplay {
         Self {
             width,
             height,
+            stride,
             draw_buffer,
             font_weight,
             raster_height,
@@ -116,11 +124,12 @@ impl NotoFontDisplay {
             };
             for (row_i, row) in char_raster.raster().iter().enumerate() {
                 for (col_i, intensity) in row.iter().enumerate() {
+                    // use stride for row offset calculation instead of width
                     let index = char_i * char_raster.width()
                         + col_i
-                        + row_i * self.width
+                        + row_i * self.stride
                         + (self.cursor_x as usize)
-                        + (self.cursor_y as usize * self.width);
+                        + (self.cursor_y as usize * self.stride);
 
                     let curr_pixel_rgb = self.draw_buffer[index];
                     let mut r = ((curr_pixel_rgb & 0xff0000) >> 16) as u8;
@@ -139,6 +148,7 @@ impl NotoFontDisplay {
 
         self.cursor_y += msg.len();
 
+        // use width for visible area boundary check
         if self.cursor_x >= self.width {
             self.cursor_y = 0;
             self.cursor_x += self.raster_height as usize;
