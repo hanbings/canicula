@@ -18,7 +18,7 @@ bootloader_api = { workspace = true }
 noto-sans-mono-bitmap = { workspace = true, features = ["font_weights_all", "raster_heights_all"] }
 canicula-common = { workspace = true }
 
-[target.x86_64-canicula-kernel.dependencies]
+[target.'cfg(target_arch = "x86_64")'.dependencies]
 aml = "0.16.4"
 acpi = "6.0.1"
 x86 = "0.52.0"
@@ -31,8 +31,8 @@ conquer-once = { version = "0.4.0", default-features = false }
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 linked_list_allocator = "0.10.5"
 
-[target.aarch64-canicula-kernel.dependencies]
+[target.'cfg(target_arch = "aarch64")'.dependencies] 
 
-[target.riscv64gc-canicula-kernel.dependencies]
+[target.'cfg(target_arch = "riscv64")'.dependencies] 
 sbi-rt = { version = "0.0.3", features = ["legacy"] }
 riscv = "0.16.0"

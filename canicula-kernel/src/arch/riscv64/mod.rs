@@ -13,17 +13,17 @@ mod qemu;
 mod sbi;
 
 pub fn clear_bss() {
-    extern "C" {
+    unsafe extern "C" {
         fn sbss();
         fn ebss();
     }
-    (sbss as usize..ebss as usize).for_each(|a| unsafe { (a as *mut u8).write_volatile(0) });
+    (sbss as *const () as usize..ebss as *const () as usize).for_each(|a| unsafe { (a as *mut u8).write_volatile(0) });
 }
 
 global_asm!(include_str!("entry.asm"));
 
 pub fn entry() -> ! {
-    extern "C" {
+    unsafe extern "C" {
         // begin addr of text segment
         fn stext();
         fn etext();
@@ -45,21 +45,21 @@ pub fn entry() -> ! {
     println!("[kernel] Hello, world!");
     debug!(
         "[kernel] .text [{:#x}, {:#x})",
-        stext as usize, etext as usize
+        stext as *const () as usize, etext as *const () as usize
     );
     debug!(
         "[kernel] .rodata [{:#x}, {:#x})",
-        srodata as usize, erodata as usize
+        srodata as *const () as usize, erodata as *const () as usize
     );
     debug!(
         "[kernel] .data [{:#x}, {:#x})",
-        sdata as usize, edata as usize
+        sdata as *const () as usize, edata as *const () as usize
     );
     debug!(
         "[kernel] boot_stack top=bottom={:#x}, lower_bound={:#x}",
-        boot_stack_top as usize, boot_stack_lower_bound as usize
+        boot_stack_top as *const () as usize, boot_stack_lower_bound as *const () as usize
     );
-    debug!("[kernel] .bss [{:#x}, {:#x})", sbss as usize, ebss as usize);
+    debug!("[kernel] .bss [{:#x}, {:#x})", sbss as *const () as usize, ebss as *const () as usize);
 
     QEMU_EXIT_HANDLE.exit_success();
 }
