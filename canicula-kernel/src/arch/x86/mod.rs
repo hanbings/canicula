@@ -70,17 +70,16 @@ pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
     bga_set_video_mode(img_width, img_height, VBE_DISPI_BPP_32 as u32, true, true);
     bga_set_bank(0);
 
-    let fb_info = boot_info.framebuffer.as_ref().unwrap().info();
-    // use stride for framebuffer offset calculation
-    let fb_stride = fb_info.stride;
+    // After bga_set_video_mode, the framebuffer stride equals the new width (img_width),
+    // not the bootloader's original stride
     let framebuffer = boot_info.framebuffer.as_ref().unwrap().buffer().as_ptr() as *mut u32;
     unsafe {
         for y in 0..img_height {
             for x in 0..img_width {
                 // source index uses image width
                 let src_index = (y * img_width + x) as usize;
-                // destination offset uses framebuffer stride
-                let dst_offset = (y as usize * fb_stride) + x as usize;
+                // destination offset uses image width as stride (set by BGA mode)
+                let dst_offset = (y as usize * img_width as usize) + x as usize;
                 let pixel = pixels[src_index];
                 let r = pixel[0];
                 let g = pixel[1];

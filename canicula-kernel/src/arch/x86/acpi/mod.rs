@@ -71,11 +71,16 @@ pub fn init(rsdp_addr: &u64) {
 
     // Try to parse AML and get S5 sleep type
     let slp_typ_a = {
+        // ACPI table header is 36 bytes, AML code starts after it
+        const ACPI_TABLE_HEADER_SIZE: usize = 36;
         let table = unsafe {
             let ptr = crate::arch::x86::memory::physical_to_virtual(PhysAddr::new(
                 dsdt.phys_address as u64,
             ));
-            core::slice::from_raw_parts(ptr.as_ptr(), dsdt.length as usize)
+            // Skip the ACPI table header to get pure AML bytecode
+            let aml_start = ptr.as_ptr::<u8>().add(ACPI_TABLE_HEADER_SIZE);
+            let aml_length = dsdt.length as usize - ACPI_TABLE_HEADER_SIZE;
+            core::slice::from_raw_parts(aml_start, aml_length)
         };
 
         let handler = Box::new(crate::arch::x86::acpi::handler::AmlHandler);
