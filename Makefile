@@ -26,7 +26,7 @@ all: efi kernel
 
 efi:
 	cargo build -p canicula-loader \
-		-Zbuild-std=core \
+		-Zbuild-std=core,alloc \
 		-Zbuild-std-features=compiler-builtins-mem \
 		--release \
 		--target x86_64-unknown-uefi
