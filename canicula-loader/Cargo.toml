@@ -1,0 +1,13 @@
+[package]
+name = "canicula-loader"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+log = "0.4"
+x86_64 = "0.15.2"
+xmas-elf = "0.9.1"
+uefi = { version = "0.33.0", features = ["panic_handler", "logger", "alloc", "global_allocator"] }

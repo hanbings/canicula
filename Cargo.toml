@@ -1,24 +1,14 @@
 [workspace]
 resolver = "2"
 members = [
-    "bootloader/uefi",
-    "bootloader/api",
-    "bootloader/common",
-    "bootloader/common/config",
-    "bootloader/bios/common",
-
     "canicula-common",
     "canicula-ext4",
     "canicula-kernel",
     "canicula-libs",
+    "canicula-loader",
 ]
 
 [workspace.dependencies]
-bootloader_api = { version = "0.11.8", path = "bootloader/api" }
-bootloader-x86_64-common = { version = "0.11.8", path = "bootloader/common" }
-bootloader-boot-config = { version = "0.11.8", path = "bootloader/common/config" }
-bootloader-x86_64-bios-common = { version = "0.11.8", path = "bootloader/bios/common" }
-
 # canicula internal crates
 canicula-common = { path = "canicula-common" }
 canicula-ext4 = { path = "canicula-ext4" }

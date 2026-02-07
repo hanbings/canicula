@@ -31,7 +31,7 @@ pub fn panic(info: &PanicInfo) -> ! {
     }
 }
 
-pub fn entry(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
+pub fn entry(boot_info: &'static mut canicula_common::entry::BootInfo) -> ! {
     crate::arch::x86::logging::init();
     crate::arch::x86::console::init(boot_info.framebuffer.as_mut().unwrap());
 

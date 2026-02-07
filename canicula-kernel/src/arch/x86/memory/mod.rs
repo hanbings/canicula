@@ -52,9 +52,9 @@ pub unsafe fn virtual_to_physical(
     Some(frame.start_address() + u64::from(addr.page_offset()))
 }
 
-pub fn init(boot_info: &'static mut bootloader_api::BootInfo) -> &'static bootloader_api::BootInfo {
+pub fn init(boot_info: &'static mut canicula_common::entry::BootInfo) -> &'static canicula_common::entry::BootInfo {
     let physical_memory_offset =
-        VirtAddr::new(boot_info.physical_memory_offset.into_option().unwrap());
+        VirtAddr::new(boot_info.physical_memory_offset.expect("Physical memory offset not found"));
 
     PHYSICAL_MEMORY_OFFSET.call_once(|| physical_memory_offset);
 
