@@ -1,6 +1,6 @@
 use core::fmt::Write;
 
-use bootloader_api::info::FrameBuffer;
+use canicula_common::entry::FrameBuffer;
 
 use lazy_static::lazy_static;
 use noto_sans_mono_bitmap::FontWeight;

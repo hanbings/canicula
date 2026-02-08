@@ -1,0 +1,10 @@
+[unstable]
+build-std = ["core", "compiler_builtins", "alloc"]
+
+[build]
+target = [
+    "x86_64-unknown-none",
+    "aarch64-unknown-none",
+    "riscv64gc-unknown-none-elf",
+    "x86_64-unknown-linux-gnu",
+]

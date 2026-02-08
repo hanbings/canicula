@@ -14,7 +14,6 @@ path = "src/main.rs"
 [dependencies]
 log = "0.4.27"
 spin = "0.10.0"
-bootloader_api = { workspace = true }
 noto-sans-mono-bitmap = { workspace = true, features = ["font_weights_all", "raster_heights_all"] }
 canicula-common = { workspace = true }
 

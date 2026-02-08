@@ -23,18 +23,24 @@ pub fn kernel() -> ! {
     arch::aarch::entry();
 }
 
-#[cfg(target_arch = "x86_64")]
-const CONFIG: bootloader_api::BootloaderConfig = {
-    let mut config = bootloader_api::BootloaderConfig::new_default();
-    config.kernel_stack_size = 1000 * 1024;
-    config.mappings.physical_memory = Some(bootloader_api::config::Mapping::Dynamic);
-    config
-};
-#[cfg(target_arch = "x86_64")]
-bootloader_api::entry_point!(kernel_main, config = &CONFIG);
-
+/// Entry point called by the bootloader.
+/// This naked function ensures proper stack alignment before calling the real entry.
 #[unsafe(no_mangle)]
+#[unsafe(naked)]
 #[cfg(target_arch = "x86_64")]
-fn kernel_main(boot_info: &'static mut bootloader_api::BootInfo) -> ! {
+pub unsafe extern "C" fn kernel_main() -> ! {
+    // RDI contains the boot_info pointer (passed by bootloader)
+    // Align stack to 16 bytes, then call (which pushes 8-byte return address)
+    // This makes RSP % 16 == 8 at function entry, as per x86_64 ABI
+    core::arch::naked_asm!(
+        "and rsp, 0xFFFFFFFFFFFFFFF0", // Align stack to 16 bytes
+        "call {entry}",                 // call pushes return addr, making RSP % 16 == 8
+        "ud2",                          // Should never return
+        entry = sym kernel_entry,
+    )
+}
+
+#[cfg(target_arch = "x86_64")]
+fn kernel_entry(boot_info: &'static mut canicula_common::entry::BootInfo) -> ! {
     arch::x86::entry(boot_info)
 }
