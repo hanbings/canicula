@@ -53,8 +53,7 @@ pub fn init(
 ) {
     debug!("boot info {:#?}", boot_info);
 
-    let physical_memory_offset =
-        VirtAddr::new(boot_info.physical_memory_offset.unwrap());
+    let physical_memory_offset = VirtAddr::new(boot_info.physical_memory_offset.unwrap());
 
     let l4_table = unsafe { active_level_4_table(physical_memory_offset) };
 

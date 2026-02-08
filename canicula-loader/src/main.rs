@@ -26,7 +26,6 @@ const PHYSICAL_MEMORY_OFFSET: u64 = 0xffff_8800_0000_0000;
 
 // Page table indices (for 0xfffff80000000000)
 const KERNEL_PML4_INDEX: usize = 496; // (0xfffff80000000000 >> 39) & 0x1FF
-const KERNEL_PDPT_INDEX: usize = 0; // (0xfffff80000000000 >> 30) & 0x1FF
 const PHYS_MAP_PML4_INDEX: usize = 272; // 0xffff880000000000 >> 39 & 0x1FF
 
 // Page table entry flags
@@ -370,8 +369,8 @@ fn main() -> Status {
     let pt_config = unsafe { allocate_page_tables(kernel_phys_base, total_size) };
     info!("Page table memory allocated at: {:#x}", pt_config.pml4);
 
-    // Allocate kernel stack (64KB)
-    const KERNEL_STACK_SIZE: usize = 64 * 1024;
+    // Allocate kernel stack (1MB)
+    const KERNEL_STACK_SIZE: usize = 1024 * 1024;
     let stack_pages = (KERNEL_STACK_SIZE + PAGE_SIZE - 1) / PAGE_SIZE;
     let stack_ptr = uefi::boot::allocate_pages(
         AllocateType::AnyPages,
@@ -382,7 +381,11 @@ fn main() -> Status {
     // Stack grows downward, so stack top is at the end of allocated memory
     // Use 16-byte alignment
     let stack_top = (stack_ptr.as_ptr() as u64 + KERNEL_STACK_SIZE as u64) & !0xF;
-    info!("Kernel stack allocated: base={:#x}, top={:#x}", stack_ptr.as_ptr() as u64, stack_top);
+    info!(
+        "Kernel stack allocated: base={:#x}, top={:#x}",
+        stack_ptr.as_ptr() as u64,
+        stack_top
+    );
 
     // Get graphics info
     let gop_handler = uefi::boot::get_handle_for_protocol::<GraphicsOutput>().unwrap();
