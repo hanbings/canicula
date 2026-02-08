@@ -42,13 +42,13 @@ pub fn entry(boot_info: &'static mut canicula_common::entry::BootInfo) -> ! {
     let boot_info = crate::arch::x86::memory::init(boot_info);
     info!("Memory initialized");
 
-    // TODO: After switching to canicula-loader and encountered many problems with ACPI initialization. orz
-    // crate::arch::x86::acpi::init(boot_info.rsdp_addr.as_ref().unwrap());
-    // info!("ACPI Initialized");
+    crate::arch::x86::acpi::init(boot_info.rsdp_addr.as_ref().unwrap());
+    info!("ACPI Initialized");
 
-    crate::arch::x86::apic::init(boot_info.rsdp_addr.as_ref().unwrap());
-    crate::arch::x86::interrupts::enable_interrupts();
-    info!("APIC Initialized");
+    // TODO: After switching to canicula-loader and encountered many problems with ACPI initialization. orz
+    // crate::arch::x86::apic::init(boot_info.rsdp_addr.as_ref().unwrap());
+    // crate::arch::x86::interrupts::enable_interrupts();
+    // info!("APIC Initialized");
 
     crate::arch::x86::pcie::init();
     info!("PCIe Initialized");
