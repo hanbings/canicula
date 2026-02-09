@@ -6,8 +6,9 @@ extern crate alloc;
 mod canicula;
 mod config;
 mod linux;
+mod menu;
 
-use config::{BootMode, BOOT_MODE};
+use config::BootMode;
 use uefi::prelude::*;
 
 pub(crate) static FILE_BUFFER_SIZE: usize = 0x400;
@@ -64,7 +65,9 @@ fn main() -> Status {
     uefi::helpers::init().unwrap();
     log::info!("Canicula Loader starting...");
 
-    match BOOT_MODE {
+    let mode = menu::show_boot_menu();
+
+    match mode {
         BootMode::LinuxEfiStub => linux::boot_linux_efi_stub(),
         BootMode::CaniculaKernel => canicula::boot_canicula_kernel(),
     }

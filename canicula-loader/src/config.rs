@@ -1,5 +1,5 @@
 /// Boot mode selection: which kernel to boot
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum BootMode {
     /// Boot the custom Canicula kernel (ELF format)
     #[allow(dead_code)]
@@ -9,9 +9,33 @@ pub enum BootMode {
     LinuxEfiStub,
 }
 
-/// Select which kernel to boot
-pub const BOOT_MODE: BootMode = BootMode::LinuxEfiStub;
+/// A boot menu entry
+pub struct BootEntry {
+    /// Display name shown in the boot menu
+    pub name: &'static str,
+    /// Boot mode to use when this entry is selected
+    pub mode: BootMode,
+}
 
+// Boot menu configuration
+
+/// Available boot entries shown in the boot menu
+pub static BOOT_ENTRIES: &[BootEntry] = &[
+    BootEntry {
+        name: "Canicula Kernel",
+        mode: BootMode::CaniculaKernel,
+    },
+    BootEntry {
+        name: "Linux (EFI Stub)",
+        mode: BootMode::LinuxEfiStub,
+    },
+];
+
+/// Default selected entry index (0-based)
+pub const DEFAULT_ENTRY: usize = 0;
+
+/// Auto-boot timeout in seconds
+pub const BOOT_TIMEOUT_SECS: usize = 5;
 
 // Linux EFI Stub boot configuration
 
@@ -23,7 +47,6 @@ pub static INITRD_PATH: &str = "\\initrd.img";
 
 /// Kernel command line passed to the Linux kernel
 pub static CMDLINE: &str = "console=tty0 console=ttyS0";
-
 
 // Canicula kernel boot configuration
 
