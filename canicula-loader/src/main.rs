@@ -42,7 +42,7 @@ const BOOT_MODE: BootMode = BootMode::LinuxEfiStub;
 // Linux EFI stub boot configuration
 static VMLINUZ_PATH: &str = "\\vmlinuz";
 static INITRD_PATH: &str = "\\initrd.img";
-static CMDLINE: &str = "console=ttyS0";
+static CMDLINE: &str = "console=tty0 console=ttyS0";
 
 // Physical memory direct mapping base (identity map the first 4GB here)
 const PHYSICAL_MEMORY_OFFSET: u64 = 0xffff_8800_0000_0000;
