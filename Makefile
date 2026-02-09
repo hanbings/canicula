@@ -47,6 +47,25 @@ clean:
 	rm -rf target
 	rm -rf esp
 
+vmlinuz:
+	cargo build -p canicula-loader \
+		-Zbuild-std=core,alloc \
+		-Zbuild-std-features=compiler-builtins-mem \
+		--release \
+		--target x86_64-unknown-uefi
+	mkdir -p esp/efi/boot/
+	cp target/x86_64-unknown-uefi/release/canicula-loader.efi esp/efi/boot/bootx64.efi
+	@if [ -f vmlinuz-* ]; then \
+		cp vmlinuz-* esp/vmlinuz; \
+		echo "Copied vmlinuz to esp/vmlinuz"; \
+	else \
+		echo "Warning: No vmlinuz file found in project root"; \
+	fi
+	@if [ -f initrd.img* ]; then \
+		cp initrd.img* esp/initrd.img; \
+		echo "Copied initrd to esp/initrd.img"; \
+	fi
+
 clean-esp:
 	rm -rf esp
 
@@ -63,4 +82,4 @@ qemu:
 kill-qemu:
 	pgrep qemu | xargs kill -9
 
-.PHONY: efi kernel clean qemu kill-qemu clean-esp all
+.PHONY: efi kernel vmlinuz clean qemu kill-qemu clean-esp all
