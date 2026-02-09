@@ -2,6 +2,10 @@ OS := $(shell uname)
 DISTRO := $(shell cat /etc/*release | grep '^ID=' | cut -d '=' -f2)
 LOG_LEVEL ?= DEBUG
 
+KERNEL_VERSION ?= $(shell uname -r)
+VMLINUZ_SRC ?= /boot/vmlinuz-$(KERNEL_VERSION)
+BUSYBOX ?= $(shell command -v busybox 2>/dev/null)
+
 OVMF_CODE_PATH := /usr/share/OVMF/OVMF_CODE.fd
 OVMF_VARS_PATH := /usr/share/OVMF/OVMF_VARS.fd
 
@@ -49,13 +53,28 @@ clean:
 
 initramfs:
 	@echo "Building minimal initramfs with busybox..."
+	@if [ -z "$(BUSYBOX)" ] || [ ! -f "$(BUSYBOX)" ]; then \
+		echo "Error: busybox not found."; \
+		echo "  Install busybox (e.g. apt install busybox-static) or set BUSYBOX=/path/to/busybox"; \
+		exit 1; \
+	fi
 	rm -rf initramfs
-	mkdir -p initramfs/{bin,sbin,etc,proc,sys,dev,tmp,lib/x86_64-linux-gnu,lib64,usr/bin,usr/sbin,var/run,root,mnt}
-	cp /bin/busybox initramfs/bin/
-	cp /lib/x86_64-linux-gnu/libresolv.so.2 initramfs/lib/x86_64-linux-gnu/
-	cp /lib/x86_64-linux-gnu/libc.so.6 initramfs/lib/x86_64-linux-gnu/
-	cp /lib64/ld-linux-x86-64.so.2 initramfs/lib64/
-	for applet in $$(busybox --list); do ln -sf busybox initramfs/bin/$$applet 2>/dev/null; done
+	mkdir -p initramfs/bin initramfs/sbin initramfs/etc initramfs/proc initramfs/sys \
+		initramfs/dev initramfs/tmp initramfs/usr/bin initramfs/usr/sbin \
+		initramfs/var/run initramfs/root initramfs/mnt
+	cp $(BUSYBOX) initramfs/bin/busybox
+	@# Copy dynamic libraries if busybox is dynamically linked
+	@if ldd "$(BUSYBOX)" >/dev/null 2>&1 && ! ldd "$(BUSYBOX)" 2>&1 | grep -q "not a dynamic"; then \
+		echo "Busybox is dynamically linked, copying shared libraries..."; \
+		ldd "$(BUSYBOX)" | grep -o '/[^ ]*' | while read lib; do \
+			dir=$$(dirname "$$lib"); \
+			mkdir -p "initramfs$$dir"; \
+			cp "$$lib" "initramfs$$lib"; \
+		done; \
+	else \
+		echo "Busybox is statically linked, no shared libraries needed."; \
+	fi
+	for applet in $$("$(BUSYBOX)" --list); do ln -sf busybox initramfs/bin/$$applet 2>/dev/null; done
 	for cmd in init mount umount poweroff reboot halt switch_root; do ln -sf ../bin/busybox initramfs/sbin/$$cmd; done
 	printf '#!/bin/sh\nmount -t proc none /proc\nmount -t sysfs none /sys\nmount -t devtmpfs none /dev\nmkdir -p /dev/pts\nmount -t devpts none /dev/pts\nhostname canicula\necho ""\necho "  Canicula Linux Boot - Initramfs"\necho "  Kernel: $$(uname -r)"\necho ""\nexec /bin/sh\n' > initramfs/init
 	chmod +x initramfs/init
@@ -65,14 +84,17 @@ initramfs:
 	@echo "initrd.img created ($$(du -h initrd.img | cut -f1))"
 
 vmlinuz: efi initramfs
+	@if [ ! -f "$(VMLINUZ_SRC)" ]; then \
+		echo "Error: vmlinuz not found at $(VMLINUZ_SRC)"; \
+		echo "  Set VMLINUZ_SRC=/path/to/vmlinuz or KERNEL_VERSION=x.y.z"; \
+		echo "  Available kernels in /boot/:"; \
+		ls /boot/vmlinuz-* 2>/dev/null || echo "    (none found)"; \
+		exit 1; \
+	fi
 	mkdir -p esp/efi/boot/
 	cp target/x86_64-unknown-uefi/release/canicula-loader.efi esp/efi/boot/bootx64.efi
-	@if [ -f vmlinuz-* ]; then \
-		cp vmlinuz-* esp/vmlinuz; \
-		echo "Copied vmlinuz to esp/vmlinuz"; \
-	else \
-		echo "Warning: No vmlinuz file found in project root"; \
-	fi
+	cp "$(VMLINUZ_SRC)" esp/vmlinuz
+	@echo "Copied $(VMLINUZ_SRC) to esp/vmlinuz"
 	cp initrd.img esp/initrd.img
 	@echo "Copied initrd.img to esp/initrd.img"
 
