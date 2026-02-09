@@ -10,12 +10,8 @@ use uefi::proto::media::file::{File, FileAttribute, FileInfo, FileMode, FileType
 use uefi::proto::media::fs::SimpleFileSystem;
 use uefi::{CStr16, Status};
 
+use crate::config::{CMDLINE, INITRD_PATH, VMLINUZ_PATH};
 use crate::FILE_BUFFER_SIZE;
-
-// Linux EFI stub boot configuration
-static VMLINUZ_PATH: &str = "\\vmlinuz";
-static INITRD_PATH: &str = "\\initrd.img";
-static CMDLINE: &str = "console=tty0 console=ttyS0";
 
 /// Global initrd data pointer and length, set before installing the LoadFile2 protocol.
 /// Accessed by the LoadFile2 callback when the Linux kernel requests the initrd.

@@ -14,16 +14,8 @@ use uefi::{CStr16, Status};
 use xmas_elf::ElfFile;
 use xmas_elf::program::Type;
 
+use crate::config::{KERNEL_PATH, KERNEL_PML4_INDEX, PHYSICAL_MEMORY_OFFSET, PHYS_MAP_PML4_INDEX};
 use crate::{FILE_BUFFER_SIZE, PAGE_SIZE, serial_hex, serial_str};
-
-static KERNEL_PATH: &str = "\\kernel-x86_64";
-
-// Physical memory direct mapping base (identity map the first 4GB here)
-const PHYSICAL_MEMORY_OFFSET: u64 = 0xffff_8800_0000_0000;
-
-// Page table indices (for 0xfffff80000000000)
-const KERNEL_PML4_INDEX: usize = 496; // (0xfffff80000000000 >> 39) & 0x1FF
-const PHYS_MAP_PML4_INDEX: usize = 272; // 0xffff880000000000 >> 39 & 0x1FF
 
 // Page table entry flags
 const PAGE_PRESENT: u64 = 1 << 0;

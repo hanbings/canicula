@@ -4,25 +4,14 @@
 extern crate alloc;
 
 mod canicula;
+mod config;
 mod linux;
 
+use config::{BootMode, BOOT_MODE};
 use uefi::prelude::*;
 
 pub(crate) static FILE_BUFFER_SIZE: usize = 0x400;
 pub(crate) static PAGE_SIZE: usize = 0x1000;
-
-// Set BOOT_MODE to select which kernel to boot
-#[derive(PartialEq)]
-enum BootMode {
-    /// Boot the custom Canicula kernel (ELF format)
-    #[allow(dead_code)]
-    CaniculaKernel,
-    /// Boot a standard Linux kernel via EFI stub (PE/COFF vmlinuz)
-    #[allow(dead_code)]
-    LinuxEfiStub,
-}
-
-const BOOT_MODE: BootMode = BootMode::LinuxEfiStub;
 
 // Serial port output for debugging after exit_boot_services
 pub(crate) fn serial_out(c: u8) {
