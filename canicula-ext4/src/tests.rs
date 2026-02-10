@@ -1,8 +1,12 @@
 mod test {
     use crate::SuperBlock;
     use crate::error::Ext4Error;
+    use crate::fs_core::block_group_manager::BlockGroupManager;
+    use crate::fs_core::inode_reader::InodeReader;
     use crate::fs_core::superblock_manager::SuperBlockManager;
     use crate::io::block_reader::BlockReader;
+    use crate::layout::block_group::BlockGroupDesc;
+    use crate::layout::inode::{FileType, Inode, S_IFDIR};
     use crate::layout::superblock::{
         EXT4_SUPER_MAGIC, INCOMPAT_64BIT, INCOMPAT_EXTENTS, INCOMPAT_FILETYPE, INCOMPAT_FLEX_BG,
         SUPER_BLOCK_SIZE,
@@ -390,11 +394,221 @@ mod test {
         eprintln!("  has_metadata_csum:{}", mgr.has_metadata_csum);
         eprintln!("  desc_size:        {}", mgr.desc_size);
         eprintln!("  block_count:      {}", mgr.super_block.block_count());
-        eprintln!("  free_blocks:      {}", mgr.super_block.free_blocks_count());
+        eprintln!(
+            "  free_blocks:      {}",
+            mgr.super_block.free_blocks_count()
+        );
         eprintln!("  has_extents:      {}", mgr.super_block.has_extents());
         eprintln!("  has_flex_bg:      {}", mgr.super_block.has_flex_bg());
         eprintln!("  has_dir_index:    {}", mgr.super_block.has_dir_index());
-        eprintln!("  incompat:         0x{:08X}", mgr.super_block.s_feature_incompat);
-        eprintln!("  ro_compat:        0x{:08X}", mgr.super_block.s_feature_ro_compat);
+        eprintln!(
+            "  incompat:         0x{:08X}",
+            mgr.super_block.s_feature_incompat
+        );
+        eprintln!(
+            "  ro_compat:        0x{:08X}",
+            mgr.super_block.s_feature_ro_compat
+        );
+    }
+
+    // Block Group Descriptor + Inode
+    #[test]
+    fn test_parse_block_group_desc_32bit() {
+        let mut raw = [0u8; 32];
+        // block_bitmap_lo
+        raw[0x00..0x04].copy_from_slice(&100u32.to_le_bytes());
+        // inode_bitmap_lo
+        raw[0x04..0x08].copy_from_slice(&101u32.to_le_bytes());
+        // inode_table_lo
+        raw[0x08..0x0C].copy_from_slice(&102u32.to_le_bytes());
+        // free_blocks_count_lo
+        raw[0x0C..0x0E].copy_from_slice(&500u16.to_le_bytes());
+        // free_inodes_count_lo
+        raw[0x0E..0x10].copy_from_slice(&200u16.to_le_bytes());
+        // used_dirs_count_lo
+        raw[0x10..0x12].copy_from_slice(&3u16.to_le_bytes());
+        // flags
+        raw[0x12..0x14].copy_from_slice(&0x04u16.to_le_bytes());
+        // checksum
+        raw[0x1E..0x20].copy_from_slice(&0xABCDu16.to_le_bytes());
+
+        let desc = BlockGroupDesc::parse(&raw, false).unwrap();
+        assert_eq!(desc.block_bitmap(false), 100);
+        assert_eq!(desc.inode_bitmap(false), 101);
+        assert_eq!(desc.inode_table(false), 102);
+        assert_eq!(desc.free_blocks_count(false), 500);
+        assert_eq!(desc.free_inodes_count(false), 200);
+        assert_eq!(desc.used_dirs_count(false), 3);
+        assert_eq!(desc.bg_flags, 0x04);
+        assert_eq!(desc.bg_checksum, 0xABCD);
+    }
+
+    #[test]
+    fn test_parse_block_group_desc_64bit() {
+        let mut raw = [0u8; 64];
+        // lo fields
+        raw[0x00..0x04].copy_from_slice(&100u32.to_le_bytes());
+        raw[0x04..0x08].copy_from_slice(&101u32.to_le_bytes());
+        raw[0x08..0x0C].copy_from_slice(&102u32.to_le_bytes());
+        // hi fields
+        raw[0x20..0x24].copy_from_slice(&1u32.to_le_bytes()); // block_bitmap_hi
+        raw[0x24..0x28].copy_from_slice(&2u32.to_le_bytes()); // inode_bitmap_hi
+        raw[0x28..0x2C].copy_from_slice(&3u32.to_le_bytes()); // inode_table_hi
+
+        let desc = BlockGroupDesc::parse(&raw, true).unwrap();
+        assert_eq!(desc.block_bitmap(true), (1u64 << 32) | 100);
+        assert_eq!(desc.inode_bitmap(true), (2u64 << 32) | 101);
+        assert_eq!(desc.inode_table(true), (3u64 << 32) | 102);
+    }
+
+    #[test]
+    fn test_parse_inode_basic() {
+        let mut raw = [0u8; 256];
+        // i_mode = 0x41ED (drwxr-xr-x)
+        raw[0x00..0x02].copy_from_slice(&0x41EDu16.to_le_bytes());
+        // i_uid_lo = 1000
+        raw[0x02..0x04].copy_from_slice(&1000u16.to_le_bytes());
+        // i_size_lo = 4096
+        raw[0x04..0x08].copy_from_slice(&4096u32.to_le_bytes());
+        // i_gid_lo = 1000
+        raw[0x18..0x1A].copy_from_slice(&1000u16.to_le_bytes());
+        // i_links_count = 2
+        raw[0x1A..0x1C].copy_from_slice(&2u16.to_le_bytes());
+        // i_flags = EXTENTS_FL (0x00080000)
+        raw[0x20..0x24].copy_from_slice(&0x0008_0000u32.to_le_bytes());
+        // i_generation = 42
+        raw[0x64..0x68].copy_from_slice(&42u32.to_le_bytes());
+
+        let inode = Inode::parse(&raw, 256).unwrap();
+        assert_eq!(inode.i_mode, 0x41ED);
+        assert_eq!(inode.i_uid, 1000);
+        assert_eq!(inode.i_gid, 1000);
+        assert_eq!(inode.i_size, 4096);
+        assert_eq!(inode.i_links_count, 2);
+        assert_eq!(inode.i_generation, 42);
+        assert!(inode.is_dir());
+        assert!(!inode.is_file());
+        assert!(!inode.is_symlink());
+        assert!(inode.uses_extents());
+        assert!(!inode.uses_htree());
+        assert_eq!(inode.file_type(), FileType::Directory);
+    }
+
+    #[test]
+    fn test_parse_inode_uid_gid_combined() {
+        let mut raw = [0u8; 256];
+        raw[0x00..0x02].copy_from_slice(&0x8180u16.to_le_bytes()); // regular file
+        // uid_lo = 0x1234, uid_hi = 0x0001
+        raw[0x02..0x04].copy_from_slice(&0x1234u16.to_le_bytes());
+        raw[0x78..0x7A].copy_from_slice(&0x0001u16.to_le_bytes());
+        // gid_lo = 0x5678, gid_hi = 0x0002
+        raw[0x18..0x1A].copy_from_slice(&0x5678u16.to_le_bytes());
+        raw[0x7A..0x7C].copy_from_slice(&0x0002u16.to_le_bytes());
+
+        let inode = Inode::parse(&raw, 256).unwrap();
+        assert_eq!(inode.i_uid, 0x0001_1234);
+        assert_eq!(inode.i_gid, 0x0002_5678);
+        assert!(inode.is_file());
+    }
+
+    #[test]
+    fn test_parse_inode_size_combined() {
+        let mut raw = [0u8; 256];
+        raw[0x00..0x02].copy_from_slice(&0x8180u16.to_le_bytes()); // regular file
+        // size_lo = 0x1000, size_hi = 0x0001
+        raw[0x04..0x08].copy_from_slice(&0x0000_1000u32.to_le_bytes());
+        raw[0x6C..0x70].copy_from_slice(&0x0000_0001u32.to_le_bytes());
+
+        let inode = Inode::parse(&raw, 256).unwrap();
+        assert_eq!(inode.i_size, (1u64 << 32) | 0x1000);
+    }
+
+    // Real ext4 image
+
+    #[test]
+    fn test_real_ext4_image_read_root_inode() {
+        use std::fs::{File, remove_file};
+        use std::io::Read;
+        use std::path::Path;
+        use std::process::Command;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        if !Path::new("/sbin/mkfs.ext4").exists() {
+            eprintln!("skip: /sbin/mkfs.ext4 not found");
+            return;
+        }
+
+        // Create a temp ext4 image
+        let uniq = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let image_path = format!("/tmp/canicula-ext4-phase2-{uniq}.img");
+
+        let image_file = File::create(&image_path).unwrap();
+        image_file.set_len(8 * 1024 * 1024).unwrap();
+
+        let mkfs = Command::new("/sbin/mkfs.ext4")
+            .arg("-F")
+            .arg(&image_path)
+            .output()
+            .unwrap();
+        assert!(mkfs.status.success());
+
+        // Read the full image into memory
+        let mut file = File::open(&image_path).unwrap();
+        let mut image_data = Vec::new();
+        file.read_to_end(&mut image_data).unwrap();
+        let _ = remove_file(&image_path);
+
+        // Load super block
+        let mut dev = MemoryBlockDevice::new(image_data.len(), 1024);
+        dev.data = image_data;
+        let reader = BlockReader::new(dev);
+        let super_block_mgr = SuperBlockManager::load(&reader).unwrap();
+
+        // Load block group descriptors
+        let block_group_mgr = BlockGroupManager::load(&reader, &super_block_mgr).unwrap();
+        assert_eq!(block_group_mgr.count(), super_block_mgr.group_count);
+
+        let desc0 = block_group_mgr.get_desc(0);
+        assert!(block_group_mgr.inode_table_block(0) > 0);
+        assert!(block_group_mgr.block_bitmap_block(0) > 0);
+        assert!(block_group_mgr.inode_bitmap_block(0) > 0);
+        eprintln!("--- Block group 0 ---");
+        eprintln!("  inode_table:   {}", block_group_mgr.inode_table_block(0));
+        eprintln!("  block_bitmap:  {}", block_group_mgr.block_bitmap_block(0));
+        eprintln!("  inode_bitmap:  {}", block_group_mgr.inode_bitmap_block(0));
+        eprintln!(
+            "  free_blocks:   {}",
+            desc0.free_blocks_count(super_block_mgr.is_64bit)
+        );
+        eprintln!(
+            "  free_inodes:   {}",
+            desc0.free_inodes_count(super_block_mgr.is_64bit)
+        );
+
+        // Read root inode (ino = 2)
+        let root_inode =
+            InodeReader::read_root_inode(&reader, &super_block_mgr, &block_group_mgr).unwrap();
+
+        assert!(root_inode.is_dir(), "root inode must be a directory");
+        assert_eq!(root_inode.file_type(), FileType::Directory);
+        assert_eq!(root_inode.i_mode & S_IFDIR, S_IFDIR);
+        assert!(
+            root_inode.i_links_count >= 2,
+            "root dir has at least 2 links (. and ..)"
+        );
+        assert!(root_inode.i_size > 0, "root dir has non-zero size");
+
+        eprintln!("--- Root inode (ino=2) ---");
+        eprintln!("  mode:          0o{:06o}", root_inode.i_mode);
+        eprintln!("  uid:           {}", root_inode.i_uid);
+        eprintln!("  gid:           {}", root_inode.i_gid);
+        eprintln!("  size:          {}", root_inode.i_size);
+        eprintln!("  links_count:   {}", root_inode.i_links_count);
+        eprintln!("  flags:         0x{:08X}", root_inode.i_flags);
+        eprintln!("  uses_extents:  {}", root_inode.uses_extents());
+        eprintln!("  blocks:        {}", root_inode.i_blocks);
     }
 }

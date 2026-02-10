@@ -1,8 +1,7 @@
 #![allow(dead_code)]
 
+use super::{read_u16_le, read_u32_le};
 use crate::error::{Ext4Error, Result};
-
-// ─── Constants ──────────────────────────────────────────────────────────────
 
 /// ext4 super block magic number (at offset 0x38).
 pub const EXT4_SUPER_MAGIC: u16 = 0xEF53;
@@ -13,8 +12,7 @@ pub const SUPER_BLOCK_OFFSET: usize = 1024;
 /// Super block raw size is always 1024 bytes.
 pub const SUPER_BLOCK_SIZE: usize = 1024;
 
-// ─── Incompatible feature flags ─────────────────────────────────────────────
-
+// Incompatible feature flags
 pub const INCOMPAT_FILETYPE: u32 = 0x0002;
 pub const INCOMPAT_RECOVER: u32 = 0x0004;
 pub const INCOMPAT_JOURNAL_DEV: u32 = 0x0008;
@@ -44,7 +42,7 @@ const SUPPORTED_INCOMPAT: u32 = INCOMPAT_FILETYPE
     | INCOMPAT_INLINE_DATA
     | INCOMPAT_ENCRYPT;
 
-// ─── Read-only compatible feature flags ─────────────────────────────────────
+// Read-only compatible feature flags
 
 pub const RO_COMPAT_SPARSE_SUPER: u32 = 0x0001;
 pub const RO_COMPAT_LARGE_FILE: u32 = 0x0002;
@@ -271,20 +269,4 @@ impl SuperBlock {
     pub fn has_dir_index(&self) -> bool {
         self.s_feature_compat & COMPAT_DIR_INDEX != 0
     }
-}
-
-// Little-endian byte reading helpers
-#[inline]
-fn read_u16_le(data: &[u8], offset: usize) -> u16 {
-    u16::from_le_bytes([data[offset], data[offset + 1]])
-}
-
-#[inline]
-fn read_u32_le(data: &[u8], offset: usize) -> u32 {
-    u32::from_le_bytes([
-        data[offset],
-        data[offset + 1],
-        data[offset + 2],
-        data[offset + 3],
-    ])
 }

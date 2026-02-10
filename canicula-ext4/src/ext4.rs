@@ -1,5 +1,7 @@
 #![cfg_attr(not(test), no_std)]
 
+extern crate alloc;
+
 pub mod error;
 pub mod io;
 pub mod layout;
@@ -15,7 +17,11 @@ mod tests;
 
 // Re-exports
 pub use error::Ext4Error;
+pub use fs_core::block_group_manager::BlockGroupManager;
+pub use fs_core::inode_reader::InodeReader;
 pub use fs_core::superblock_manager::SuperBlockManager;
 pub use io::block_reader::BlockReader;
+pub use layout::block_group::BlockGroupDesc;
+pub use layout::inode::Inode;
 pub use layout::superblock::SuperBlock;
 pub use traits::block_device::BlockDevice;
