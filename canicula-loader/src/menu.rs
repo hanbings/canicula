@@ -2,7 +2,7 @@ use core::fmt::Write;
 
 use uefi::proto::console::text::{Color, Key, ScanCode};
 
-use crate::config::{BootMode, BOOT_ENTRIES, BOOT_TIMEOUT_SECS, DEFAULT_ENTRY};
+use crate::config::{BOOT_ENTRIES, BOOT_TIMEOUT_SECS, BootMode, DEFAULT_ENTRY};
 
 /// Display the boot menu and return the selected boot mode.
 ///
@@ -108,7 +108,11 @@ fn draw_menu(selected: usize, timeout: Option<usize>) {
         // Timeout line
         match timeout {
             Some(secs) => {
-                let _ = write!(out, "  Boot in {}s...                              \n", secs);
+                let _ = write!(
+                    out,
+                    "  Boot in {}s...                              \n",
+                    secs
+                );
             }
             None => {
                 let _ = write!(out, "                                              \n");

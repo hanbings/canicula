@@ -14,7 +14,7 @@ use uefi::{CStr16, Status};
 use xmas_elf::ElfFile;
 use xmas_elf::program::Type;
 
-use crate::config::{KERNEL_PATH, KERNEL_PML4_INDEX, PHYSICAL_MEMORY_OFFSET, PHYS_MAP_PML4_INDEX};
+use crate::config::{KERNEL_PATH, KERNEL_PML4_INDEX, PHYS_MAP_PML4_INDEX, PHYSICAL_MEMORY_OFFSET};
 use crate::{FILE_BUFFER_SIZE, PAGE_SIZE, serial_hex, serial_str};
 
 // Page table entry flags

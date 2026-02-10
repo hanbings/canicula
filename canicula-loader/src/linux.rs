@@ -10,8 +10,8 @@ use uefi::proto::media::file::{File, FileAttribute, FileInfo, FileMode, FileType
 use uefi::proto::media::fs::SimpleFileSystem;
 use uefi::{CStr16, Status};
 
-use crate::config::{CMDLINE, INITRD_PATH, VMLINUZ_PATH};
 use crate::FILE_BUFFER_SIZE;
+use crate::config::{CMDLINE, INITRD_PATH, VMLINUZ_PATH};
 
 /// Global initrd data pointer and length, set before installing the LoadFile2 protocol.
 /// Accessed by the LoadFile2 callback when the Linux kernel requests the initrd.
