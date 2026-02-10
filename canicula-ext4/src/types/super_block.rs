@@ -1,4 +1,28 @@
 #![allow(dead_code)]
+pub const EXT4_SUPER_BLOCK_OFFSET: usize = 1024;
+pub const EXT4_SUPER_BLOCK_MAGIC: u16 = 0xEF53;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SuperBlockHeader {
+    pub inodes_count: u32,
+    pub blocks_count_lo: u32,
+    pub free_blocks_count_lo: u32,
+    pub free_inodes_count: u32,
+    pub log_block_size: u32,
+    pub blocks_per_group: u32,
+    pub inodes_per_group: u32,
+    pub magic: u16,
+    pub inode_size: u16,
+    pub feature_incompat: u32,
+    pub feature_ro_compat: u32,
+}
+
+impl SuperBlockHeader {
+    pub fn block_size(&self) -> usize {
+        1024usize << self.log_block_size
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SuperBlock {
     InodesCount,
@@ -178,38 +202,38 @@ impl SuperBlock {
             },
             SuperBlock::RevLevel => SuperBlockSlice {
                 offset: 76,
-                size: 2,
+                size: 4,
             },
             SuperBlock::DefResuid => SuperBlockSlice {
-                offset: 78,
-                size: 2,
-            },
-            SuperBlock::DefResgid => SuperBlockSlice {
                 offset: 80,
                 size: 2,
             },
-            SuperBlock::FirstIno => SuperBlockSlice {
+            SuperBlock::DefResgid => SuperBlockSlice {
                 offset: 82,
+                size: 2,
+            },
+            SuperBlock::FirstIno => SuperBlockSlice {
+                offset: 84,
                 size: 4,
             },
             SuperBlock::InodeSize => SuperBlockSlice {
-                offset: 86,
-                size: 2,
-            },
-            SuperBlock::BlockGroupNr => SuperBlockSlice {
                 offset: 88,
                 size: 2,
             },
-            SuperBlock::FeatureCompat => SuperBlockSlice {
+            SuperBlock::BlockGroupNr => SuperBlockSlice {
                 offset: 90,
+                size: 2,
+            },
+            SuperBlock::FeatureCompat => SuperBlockSlice {
+                offset: 92,
                 size: 4,
             },
             SuperBlock::FeatureIncompat => SuperBlockSlice {
-                offset: 94,
+                offset: 96,
                 size: 4,
             },
             SuperBlock::FeatureRoCompat => SuperBlockSlice {
-                offset: 98,
+                offset: 100,
                 size: 4,
             },
             SuperBlock::Uuid => SuperBlockSlice {
@@ -455,6 +479,10 @@ impl SuperBlock {
     #[allow(dead_code)]
     pub fn offset(&self) -> usize {
         self.slice().offset
+    }
+
+    pub fn absolute_offset(&self) -> usize {
+        EXT4_SUPER_BLOCK_OFFSET + self.offset()
     }
 
     #[allow(dead_code)]
