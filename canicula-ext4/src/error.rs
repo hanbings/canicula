@@ -19,6 +19,10 @@ pub enum Ext4Error {
     ReadOnly,
     /// File or directory not found
     NotFound,
+    /// Expected directory inode but got other type
+    NotDirectory,
+    /// Symlink resolution depth exceeded limit
+    SymlinkLoop(u32),
 }
 
 /// Convenience Result type alias.
