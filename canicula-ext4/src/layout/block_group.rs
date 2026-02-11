@@ -132,4 +132,51 @@ impl BlockGroupDesc {
         }
         Ok(())
     }
+
+    /// Update the free blocks count (lo + hi).
+    pub fn set_free_blocks_count(&mut self, count: u32, is_64bit: bool) {
+        self.bg_free_blocks_count_lo = count as u16;
+        if is_64bit {
+            self.bg_free_blocks_count_hi = (count >> 16) as u16;
+        }
+    }
+
+    /// Update the free inodes count (lo + hi).
+    pub fn set_free_inodes_count(&mut self, count: u32, is_64bit: bool) {
+        self.bg_free_inodes_count_lo = count as u16;
+        if is_64bit {
+            self.bg_free_inodes_count_hi = (count >> 16) as u16;
+        }
+    }
+
+    /// Update the used dirs count (lo + hi).
+    pub fn set_used_dirs_count(&mut self, count: u32, is_64bit: bool) {
+        self.bg_used_dirs_count_lo = count as u16;
+        if is_64bit {
+            self.bg_used_dirs_count_hi = (count >> 16) as u16;
+        }
+    }
+
+    /// Serialize this descriptor into a byte buffer of `desc_size` bytes.
+    pub fn serialize(&self, desc_size: usize, is_64bit: bool) -> alloc::vec::Vec<u8> {
+        let mut out = alloc::vec![0u8; desc_size];
+        out[0x00..0x04].copy_from_slice(&self.bg_block_bitmap_lo.to_le_bytes());
+        out[0x04..0x08].copy_from_slice(&self.bg_inode_bitmap_lo.to_le_bytes());
+        out[0x08..0x0C].copy_from_slice(&self.bg_inode_table_lo.to_le_bytes());
+        out[0x0C..0x0E].copy_from_slice(&self.bg_free_blocks_count_lo.to_le_bytes());
+        out[0x0E..0x10].copy_from_slice(&self.bg_free_inodes_count_lo.to_le_bytes());
+        out[0x10..0x12].copy_from_slice(&self.bg_used_dirs_count_lo.to_le_bytes());
+        out[0x12..0x14].copy_from_slice(&self.bg_flags.to_le_bytes());
+        out[0x1E..0x20].copy_from_slice(&self.bg_checksum.to_le_bytes());
+
+        if is_64bit && desc_size >= 64 {
+            out[0x20..0x24].copy_from_slice(&self.bg_block_bitmap_hi.to_le_bytes());
+            out[0x24..0x28].copy_from_slice(&self.bg_inode_bitmap_hi.to_le_bytes());
+            out[0x28..0x2C].copy_from_slice(&self.bg_inode_table_hi.to_le_bytes());
+            out[0x2C..0x2E].copy_from_slice(&self.bg_free_blocks_count_hi.to_le_bytes());
+            out[0x2E..0x30].copy_from_slice(&self.bg_free_inodes_count_hi.to_le_bytes());
+            out[0x30..0x32].copy_from_slice(&self.bg_used_dirs_count_hi.to_le_bytes());
+        }
+        out
+    }
 }

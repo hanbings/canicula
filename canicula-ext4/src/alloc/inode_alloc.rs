@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
 
 use crate::error::{Ext4Error, Result};
@@ -15,11 +16,15 @@ pub struct InodeGroupAllocState {
     pub max_bits: usize,
 }
 
-/// In-memory ext4 inode allocator model for Phase 7.
+/// In-memory ext4 inode allocator model.
+///
+/// Tracks dirty groups for bitmap and descriptor writeback.
 pub struct Ext4InodeAllocator {
     pub inodes_per_group: u32,
     pub free_inodes_total: u64,
     groups: Vec<InodeGroupAllocState>,
+    /// Inode groups whose bitmaps have been modified since last flush.
+    dirty_groups: BTreeSet<usize>,
 }
 
 impl Ext4InodeAllocator {
@@ -29,7 +34,28 @@ impl Ext4InodeAllocator {
             inodes_per_group,
             free_inodes_total,
             groups,
+            dirty_groups: BTreeSet::new(),
         }
+    }
+
+    /// Return and clear the set of groups that were modified since the last drain.
+    pub fn drain_dirty_groups(&mut self) -> BTreeSet<usize> {
+        core::mem::take(&mut self.dirty_groups)
+    }
+
+    /// Get the bitmap bytes for the given group (for writeback).
+    pub fn group_bitmap(&self, group_no: usize) -> &[u8] {
+        &self.groups[group_no].inode_bitmap
+    }
+
+    /// Get the current free inode count for the given group.
+    pub fn group_free_count(&self, group_no: usize) -> u32 {
+        self.groups[group_no].free_inodes_count
+    }
+
+    /// Get the current used dirs count for the given group.
+    pub fn group_used_dirs(&self, group_no: usize) -> u32 {
+        self.groups[group_no].used_dirs_count
     }
 
     pub fn group_count(&self) -> usize {
@@ -128,6 +154,7 @@ impl InodeAllocator for Ext4InodeAllocator {
             g.used_dirs_count += 1;
         }
         self.free_inodes_total -= 1;
+        self.dirty_groups.insert(selected);
 
         let ino = selected as u32 * self.inodes_per_group + bit as u32 + 1;
         Ok(ino)
@@ -147,6 +174,7 @@ impl InodeAllocator for Ext4InodeAllocator {
         clear_bit(&mut g.inode_bitmap, bit);
         g.free_inodes_count += 1;
         self.free_inodes_total += 1;
+        self.dirty_groups.insert(group_no);
         Ok(())
     }
 }

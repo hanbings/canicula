@@ -122,6 +122,9 @@ pub struct SuperBlock {
 
     // checksum seed (valid when INCOMPAT_CSUM_SEED is set)
     pub s_checksum_seed: u32,
+
+    // orphan inode list head (inode number, 0 = empty)
+    pub s_last_orphan: u32,
 }
 
 impl SuperBlock {
@@ -168,6 +171,7 @@ impl SuperBlock {
             },
             s_def_hash_version: raw[0xFC],
             s_checksum_seed: read_u32_le(raw, 0x1B8),
+            s_last_orphan: read_u32_le(raw, 0xE8),
         };
 
         // metadata_csum enabled: verify superblock checksum.

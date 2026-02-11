@@ -5,6 +5,7 @@ use crate::fs_core::block_group_manager::BlockGroupManager;
 use crate::fs_core::extent_modifier::ExtentModifier;
 use crate::fs_core::superblock_manager::SuperBlockManager;
 use crate::io::block_writer::BlockWriter;
+use crate::layout::checksum::inode_checksum;
 use crate::layout::inode::{EXTENTS_FL, Inode, S_IFDIR};
 use crate::traits::allocator::InodeAllocator;
 use crate::traits::block_device::BlockDevice;
@@ -46,6 +47,23 @@ impl InodeWriter {
 
         let mut inode_raw = [0u8; MAX_INODE_SIZE];
         Self::serialize_inode(inode, sb.s_inode_size, &mut inode_raw[..inode_size])?;
+
+        // Compute and fill inode checksum if metadata checksumming is enabled.
+        if super_block_manager.has_metadata_csum {
+            let csum = inode_checksum(
+                super_block_manager.csum_seed,
+                ino,
+                inode.i_generation,
+                &inode_raw[..inode_size],
+            );
+            // Write i_checksum_lo at 0x7C..0x7E
+            inode_raw[0x7C..0x7E].copy_from_slice(&(csum as u16).to_le_bytes());
+            // Write i_checksum_hi at 0x82..0x84 if inode has extended fields
+            if inode_size > 128 {
+                inode_raw[0x82..0x84].copy_from_slice(&((csum >> 16) as u16).to_le_bytes());
+            }
+        }
+
         block_buf[offset_in_block..offset_in_block + inode_size]
             .copy_from_slice(&inode_raw[..inode_size]);
         writer.write_block(block_no, &block_buf)?;

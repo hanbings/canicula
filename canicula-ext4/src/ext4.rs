@@ -69,4 +69,4 @@ pub use layout::superblock::SuperBlock;
 pub use traits::allocator::{BlockAllocator, InodeAllocator};
 pub use traits::block_device::BlockDevice;
 pub use traits::journal::{Journal, JournalRecovery};
-pub use traits::vfs::{FileSystem, InodeOps};
+pub use traits::vfs::{FileSystem, InodeOps, StatFs};

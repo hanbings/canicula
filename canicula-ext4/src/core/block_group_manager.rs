@@ -95,4 +95,14 @@ impl BlockGroupManager {
     pub fn count(&self) -> u32 {
         self.descriptors.len() as u32
     }
+
+    /// Get a mutable reference to a descriptor (for updating free counts).
+    pub fn get_desc_mut(&mut self, group_no: u32) -> &mut BlockGroupDesc {
+        &mut self.descriptors[group_no as usize]
+    }
+
+    /// Descriptor table start block.
+    pub fn desc_table_start(block_size: usize) -> u64 {
+        if block_size == 1024 { 2u64 } else { 1u64 }
+    }
 }

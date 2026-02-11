@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
 
 use crate::error::{Ext4Error, Result};
@@ -13,15 +14,16 @@ pub struct BlockGroupAllocState {
     pub max_bits: usize,
 }
 
-/// In-memory ext4 block allocator model for Phase 7.
+/// In-memory ext4 block allocator model.
 ///
-/// This provides policy + bitmap operations and can later be wired to
-/// on-disk bitmap/descriptor writeback paths.
+/// Tracks dirty groups so callers can write back modified bitmaps and descriptors.
 pub struct Ext4BlockAllocator {
     pub first_data_block: u64,
     pub blocks_per_group: u32,
     pub free_blocks_total: u64,
     groups: Vec<BlockGroupAllocState>,
+    /// Block groups whose bitmaps have been modified since last flush.
+    dirty_groups: BTreeSet<usize>,
 }
 
 impl Ext4BlockAllocator {
@@ -36,7 +38,23 @@ impl Ext4BlockAllocator {
             blocks_per_group,
             free_blocks_total,
             groups,
+            dirty_groups: BTreeSet::new(),
         }
+    }
+
+    /// Return and clear the set of groups that were modified since the last drain.
+    pub fn drain_dirty_groups(&mut self) -> BTreeSet<usize> {
+        core::mem::take(&mut self.dirty_groups)
+    }
+
+    /// Get the bitmap bytes for the given group (for writeback).
+    pub fn group_bitmap(&self, group_no: usize) -> &[u8] {
+        &self.groups[group_no].block_bitmap
+    }
+
+    /// Get the current free block count for the given group.
+    pub fn group_free_count(&self, group_no: usize) -> u32 {
+        self.groups[group_no].free_blocks_count
     }
 
     pub fn group_count(&self) -> usize {
@@ -68,6 +86,7 @@ impl Ext4BlockAllocator {
     ) {
         let g = &mut self.groups[group_no];
         let mut next_start = start_bit.min(g.max_bits);
+        let mut touched = false;
 
         while out_blocks.len() < remaining {
             let bit = match find_first_zero(&g.block_bitmap, next_start, g.max_bits) {
@@ -82,6 +101,10 @@ impl Ext4BlockAllocator {
                 + bit as u64;
             out_blocks.push(pblk);
             next_start = bit + 1;
+            touched = true;
+        }
+        if touched {
+            self.dirty_groups.insert(group_no);
         }
     }
 }
@@ -149,6 +172,7 @@ impl BlockAllocator for Ext4BlockAllocator {
             clear_bit(&mut g.block_bitmap, bit);
             g.free_blocks_count += 1;
             self.free_blocks_total += 1;
+            self.dirty_groups.insert(group_no);
         }
         Ok(())
     }
