@@ -4,6 +4,7 @@ extern crate alloc;
 
 pub mod error;
 pub mod io;
+pub mod journal;
 pub mod layout;
 pub mod traits;
 
@@ -39,6 +40,20 @@ pub use fs_core::symlink::SymlinkReader;
 pub use io::block_reader::BlockReader;
 pub use io::block_writer::BlockWriter;
 pub use io::buffer_cache::BufferCache;
+pub use journal::checkpoint::CheckpointManager;
+pub use journal::commit::JournalCommitter;
+pub use journal::descriptor::{
+    JournalTag, TAG_FLAG_DELETED, TAG_FLAG_ESCAPE, TAG_FLAG_LAST_TAG, TAG_FLAG_SAME_UUID,
+};
+pub use journal::engine::Jbd2Journal;
+pub use journal::jbd2_superblock::{
+    JBD2_BLOCKTYPE_COMMIT, JBD2_BLOCKTYPE_DESCRIPTOR, JBD2_BLOCKTYPE_REVOKE,
+    JBD2_BLOCKTYPE_SUPERBLOCK_V1, JBD2_BLOCKTYPE_SUPERBLOCK_V2, JBD2_MAGIC_NUMBER, JournalHeader,
+    JournalSuperBlock,
+};
+pub use journal::recovery::{JournalRecovery as Jbd2Recovery, RecoverySummary};
+pub use journal::revoke::parse_revoke_block;
+pub use journal::transaction::{Transaction, TransactionState};
 pub use layout::block_group::BlockGroupDesc;
 pub use layout::checksum::{crc32c, crc32c_raw};
 pub use layout::dir_entry::{DirEntry, FileType as DirEntryFileType};
@@ -51,3 +66,4 @@ pub use layout::inode::Inode;
 pub use layout::superblock::SuperBlock;
 pub use traits::allocator::{BlockAllocator, InodeAllocator};
 pub use traits::block_device::BlockDevice;
+pub use traits::journal::{Journal, JournalRecovery};
