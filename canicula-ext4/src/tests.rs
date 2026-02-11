@@ -2,14 +2,18 @@ mod test {
     use crate::SuperBlock;
     use crate::error::Ext4Error;
     use crate::fs_core::block_group_manager::BlockGroupManager;
+    use crate::fs_core::extent_walker::ExtentWalker;
+    use crate::fs_core::file_reader::FileReader;
     use crate::fs_core::inode_reader::InodeReader;
     use crate::fs_core::superblock_manager::SuperBlockManager;
     use crate::io::block_reader::BlockReader;
+    use crate::io::buffer_cache::BufferCache;
     use crate::layout::block_group::BlockGroupDesc;
+    use crate::layout::extent::{EXTENT_HEADER_MAGIC, Extent, ExtentHeader, ExtentIndex};
     use crate::layout::inode::{FileType, Inode, S_IFDIR};
     use crate::layout::superblock::{
         EXT4_SUPER_MAGIC, INCOMPAT_64BIT, INCOMPAT_EXTENTS, INCOMPAT_FILETYPE, INCOMPAT_FLEX_BG,
-        SUPER_BLOCK_SIZE,
+        RO_COMPAT_SPARSE_SUPER, SUPER_BLOCK_SIZE,
     };
     use crate::traits::block_device::BlockDevice;
 
@@ -610,5 +614,114 @@ mod test {
         eprintln!("  flags:         0x{:08X}", root_inode.i_flags);
         eprintln!("  uses_extents:  {}", root_inode.uses_extents());
         eprintln!("  blocks:        {}", root_inode.i_blocks);
+    }
+
+    #[test]
+    fn test_extent_layout_parsers() {
+        let mut header_raw = [0u8; 12];
+        header_raw[0x00..0x02].copy_from_slice(&EXTENT_HEADER_MAGIC.to_le_bytes());
+        header_raw[0x02..0x04].copy_from_slice(&2u16.to_le_bytes()); // eh_entries
+        header_raw[0x04..0x06].copy_from_slice(&4u16.to_le_bytes()); // eh_max
+        header_raw[0x06..0x08].copy_from_slice(&0u16.to_le_bytes()); // eh_depth
+        header_raw[0x08..0x0C].copy_from_slice(&9u32.to_le_bytes()); // eh_generation
+
+        let header = ExtentHeader::parse(&header_raw).unwrap();
+        assert_eq!(header.eh_entries, 2);
+        assert_eq!(header.eh_max, 4);
+        assert_eq!(header.eh_depth, 0);
+
+        let mut index_raw = [0u8; 12];
+        index_raw[0x00..0x04].copy_from_slice(&7u32.to_le_bytes());
+        index_raw[0x04..0x08].copy_from_slice(&0x1234_5678u32.to_le_bytes());
+        index_raw[0x08..0x0A].copy_from_slice(&0x0009u16.to_le_bytes());
+        let index = ExtentIndex::parse(&index_raw).unwrap();
+        assert_eq!(index.ei_block, 7);
+        assert_eq!(index.child_block(), ((0x0009u64) << 32) | 0x1234_5678u64);
+
+        let mut leaf_raw = [0u8; 12];
+        leaf_raw[0x00..0x04].copy_from_slice(&3u32.to_le_bytes()); // logical start
+        leaf_raw[0x04..0x06].copy_from_slice(&0x8005u16.to_le_bytes()); // uninitialized + 5 blocks
+        leaf_raw[0x06..0x08].copy_from_slice(&0x0001u16.to_le_bytes());
+        leaf_raw[0x08..0x0C].copy_from_slice(&100u32.to_le_bytes());
+        let leaf = Extent::parse(&leaf_raw).unwrap();
+        assert_eq!(leaf.ee_block, 3);
+        assert_eq!(leaf.block_count(), 5);
+        assert!(leaf.is_uninitialized());
+        assert_eq!(leaf.physical_start(), (1u64 << 32) | 100);
+    }
+
+    #[test]
+    fn test_extent_walker_and_file_reader_phase3() {
+        // Build a tiny image where inode #2 has one extent:
+        // logical block 0 -> physical block 5, len=1.
+        let mut dev = MemoryBlockDevice::new(64 * 1024, 1024);
+
+        // --- super block at byte offset 1024 ---
+        dev.write_u32_le(SUPER_BLOCK_OFF + 0x00, 32); // s_inodes_count
+        dev.write_u32_le(SUPER_BLOCK_OFF + 0x04, 64); // s_blocks_count_lo
+        dev.write_u32_le(SUPER_BLOCK_OFF + 0x14, 1); // s_first_data_block (1k block mode)
+        dev.write_u32_le(SUPER_BLOCK_OFF + 0x18, 0); // block_size = 1024
+        dev.write_u32_le(SUPER_BLOCK_OFF + 0x20, 64); // s_blocks_per_group
+        dev.write_u32_le(SUPER_BLOCK_OFF + 0x28, 32); // s_inodes_per_group
+        dev.write_u16_le(SUPER_BLOCK_OFF + 0x38, EXT4_SUPER_MAGIC);
+        dev.write_u16_le(SUPER_BLOCK_OFF + 0x58, 256); // s_inode_size
+        dev.write_u16_le(SUPER_BLOCK_OFF + 0xFE, 32); // s_desc_size
+        dev.write_u32_le(
+            SUPER_BLOCK_OFF + 0x60,
+            INCOMPAT_FILETYPE | INCOMPAT_EXTENTS, // enable extents
+        );
+        dev.write_u32_le(SUPER_BLOCK_OFF + 0x64, RO_COMPAT_SPARSE_SUPER);
+
+        // --- block group descriptor table at block 2 ---
+        let bgdt_off = 2 * 1024;
+        dev.write_u32_le(bgdt_off + 0x08, 3); // inode_table_lo = block 3
+
+        // --- inode table at block 3, inode #2 entry offset = one inode_size ---
+        let inode2_off = 3 * 1024 + 256;
+        dev.write_u16_le(inode2_off + 0x00, 0x81A4); // regular file mode
+        dev.write_u32_le(inode2_off + 0x04, 11); // i_size_lo
+        dev.write_u32_le(inode2_off + 0x1C, 2); // i_blocks_lo (2 * 512B sectors)
+        dev.write_u32_le(inode2_off + 0x20, 0x0008_0000); // EXTENTS_FL
+
+        // i_block extent header (12 bytes)
+        dev.write_u16_le(inode2_off + 0x28, EXTENT_HEADER_MAGIC);
+        dev.write_u16_le(inode2_off + 0x2A, 1); // eh_entries
+        dev.write_u16_le(inode2_off + 0x2C, 4); // eh_max
+        dev.write_u16_le(inode2_off + 0x2E, 0); // eh_depth = leaf in inode
+        dev.write_u32_le(inode2_off + 0x30, 0); // eh_generation
+
+        // first extent entry starts at i_block + 12
+        dev.write_u32_le(inode2_off + 0x34, 0); // ee_block
+        dev.write_u16_le(inode2_off + 0x38, 1); // ee_len
+        dev.write_u16_le(inode2_off + 0x3A, 0); // ee_start_hi
+        dev.write_u32_le(inode2_off + 0x3C, 5); // ee_start_lo
+
+        // file data block
+        let data = b"hello-ext4!";
+        let data_off = 5 * 1024;
+        dev.data[data_off..data_off + data.len()].copy_from_slice(data);
+
+        let reader = BlockReader::new(dev);
+        let sbm = SuperBlockManager::load(&reader).unwrap();
+        let bgm = BlockGroupManager::load(&reader, &sbm).unwrap();
+        let inode = InodeReader::read_inode(&reader, &sbm, &bgm, 2).unwrap();
+
+        let map = ExtentWalker::logical_to_physical(&reader, &sbm, &inode, 0)
+            .unwrap()
+            .unwrap();
+        assert_eq!(map.physical_block, 5);
+        assert_eq!(map.length, 1);
+        assert!(!map.uninitialized);
+
+        let mut out = [0u8; 11];
+        let n = FileReader::read(&reader, &sbm, &inode, 0, &mut out).unwrap();
+        assert_eq!(n, 11);
+        assert_eq!(&out, b"hello-ext4!");
+
+        // Also exercise the new read cache API.
+        let mut cache = BufferCache::new(reader, 8);
+        let blk = cache.get_block(5).unwrap();
+        assert_eq!(&blk[..11], b"hello-ext4!");
+        assert_eq!(cache.len(), 1);
     }
 }
