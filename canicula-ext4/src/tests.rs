@@ -2,6 +2,7 @@ mod test {
     use crate::SuperBlock;
     use crate::error::Ext4Error;
     use crate::fs_core::block_group_manager::BlockGroupManager;
+    use crate::fs_core::dir_reader::DirReader;
     use crate::fs_core::extent_walker::ExtentWalker;
     use crate::fs_core::file_reader::FileReader;
     use crate::fs_core::inode_reader::InodeReader;
@@ -9,6 +10,7 @@ mod test {
     use crate::io::block_reader::BlockReader;
     use crate::io::buffer_cache::BufferCache;
     use crate::layout::block_group::BlockGroupDesc;
+    use crate::layout::dir_entry::{DirEntry, FileType as DirEntryFileType};
     use crate::layout::extent::{EXTENT_HEADER_MAGIC, Extent, ExtentHeader, ExtentIndex};
     use crate::layout::inode::{FileType, Inode, S_IFDIR};
     use crate::layout::superblock::{
@@ -723,5 +725,109 @@ mod test {
         let blk = cache.get_block(5).unwrap();
         assert_eq!(&blk[..11], b"hello-ext4!");
         assert_eq!(cache.len(), 1);
+    }
+
+    #[test]
+    fn test_dir_entry_parse() {
+        // inode=12, rec_len=12, name_len=3, file_type=dir, name="etc"
+        let mut raw = [0u8; 12];
+        raw[0..4].copy_from_slice(&12u32.to_le_bytes());
+        raw[4..6].copy_from_slice(&12u16.to_le_bytes());
+        raw[6] = 3;
+        raw[7] = 2;
+        raw[8..11].copy_from_slice(b"etc");
+
+        let e = DirEntry::parse(&raw, true).unwrap();
+        assert_eq!(e.inode, 12);
+        assert_eq!(e.rec_len, 12);
+        assert_eq!(e.name, "etc");
+        assert_eq!(e.file_type, DirEntryFileType::Directory);
+        assert!(!e.is_unused());
+        assert!(!e.is_dot_or_dotdot());
+    }
+
+    #[test]
+    fn test_dir_reader_phase4() {
+        // Build image: inode #2 is a directory with one data block at physical block 6.
+        let mut dev = MemoryBlockDevice::new(64 * 1024, 1024);
+
+        // superblock
+        dev.write_u32_le(SUPER_BLOCK_OFF + 0x00, 32); // s_inodes_count
+        dev.write_u32_le(SUPER_BLOCK_OFF + 0x04, 64); // s_blocks_count_lo
+        dev.write_u32_le(SUPER_BLOCK_OFF + 0x14, 1); // first_data_block
+        dev.write_u32_le(SUPER_BLOCK_OFF + 0x18, 0); // block_size=1024
+        dev.write_u32_le(SUPER_BLOCK_OFF + 0x20, 64); // blocks_per_group
+        dev.write_u32_le(SUPER_BLOCK_OFF + 0x28, 32); // inodes_per_group
+        dev.write_u16_le(SUPER_BLOCK_OFF + 0x38, EXT4_SUPER_MAGIC);
+        dev.write_u16_le(SUPER_BLOCK_OFF + 0x58, 256); // inode_size
+        dev.write_u16_le(SUPER_BLOCK_OFF + 0xFE, 32); // desc_size
+        dev.write_u32_le(SUPER_BLOCK_OFF + 0x60, INCOMPAT_FILETYPE | INCOMPAT_EXTENTS);
+        dev.write_u32_le(SUPER_BLOCK_OFF + 0x64, RO_COMPAT_SPARSE_SUPER);
+
+        // bgdt -> inode table block 3
+        let bgdt_off = 2 * 1024;
+        dev.write_u32_le(bgdt_off + 0x08, 3);
+
+        // inode #2 in inode table
+        let inode2_off = 3 * 1024 + 256;
+        dev.write_u16_le(inode2_off + 0x00, 0x41ED); // directory mode
+        dev.write_u32_le(inode2_off + 0x04, 1024); // i_size_lo
+        dev.write_u32_le(inode2_off + 0x1C, 2); // i_blocks_lo
+        dev.write_u32_le(inode2_off + 0x20, 0x0008_0000); // EXTENTS_FL
+
+        // inode extent header
+        dev.write_u16_le(inode2_off + 0x28, EXTENT_HEADER_MAGIC);
+        dev.write_u16_le(inode2_off + 0x2A, 1); // entries
+        dev.write_u16_le(inode2_off + 0x2C, 4); // max
+        dev.write_u16_le(inode2_off + 0x2E, 0); // depth
+        dev.write_u32_le(inode2_off + 0x30, 0);
+        // leaf: logical 0 -> physical 6, len 1
+        dev.write_u32_le(inode2_off + 0x34, 0);
+        dev.write_u16_le(inode2_off + 0x38, 1);
+        dev.write_u16_le(inode2_off + 0x3A, 0);
+        dev.write_u32_le(inode2_off + 0x3C, 6);
+
+        // directory block at physical block 6:
+        // "."  rec_len=12
+        // ".." rec_len=12
+        // "foo" rec_len=1000
+        let dir_off = 6 * 1024;
+        // "."
+        dev.write_u32_le(dir_off + 0, 2);
+        dev.write_u16_le(dir_off + 4, 12);
+        dev.data[dir_off + 6] = 1;
+        dev.data[dir_off + 7] = 2;
+        dev.data[dir_off + 8] = b'.';
+        // ".."
+        dev.write_u32_le(dir_off + 12, 2);
+        dev.write_u16_le(dir_off + 16, 12);
+        dev.data[dir_off + 18] = 2;
+        dev.data[dir_off + 19] = 2;
+        dev.data[dir_off + 20] = b'.';
+        dev.data[dir_off + 21] = b'.';
+        // "foo"
+        dev.write_u32_le(dir_off + 24, 15);
+        dev.write_u16_le(dir_off + 28, 1000);
+        dev.data[dir_off + 30] = 3;
+        dev.data[dir_off + 31] = 1;
+        dev.data[dir_off + 32] = b'f';
+        dev.data[dir_off + 33] = b'o';
+        dev.data[dir_off + 34] = b'o';
+
+        let reader = BlockReader::new(dev);
+        let sbm = SuperBlockManager::load(&reader).unwrap();
+        let bgm = BlockGroupManager::load(&reader, &sbm).unwrap();
+        let root = InodeReader::read_inode(&reader, &sbm, &bgm, 2).unwrap();
+
+        let entries = DirReader::read_dir_entries(&reader, &sbm, &root).unwrap();
+        assert_eq!(entries.len(), 3);
+        assert_eq!(entries[0].name, ".");
+        assert_eq!(entries[1].name, "..");
+        assert_eq!(entries[2].name, "foo");
+
+        let ino = DirReader::lookup(&reader, &sbm, &root, "foo").unwrap();
+        assert_eq!(ino, 15);
+        let miss = DirReader::lookup(&reader, &sbm, &root, "bar");
+        assert!(matches!(miss, Err(Ext4Error::NotFound)));
     }
 }

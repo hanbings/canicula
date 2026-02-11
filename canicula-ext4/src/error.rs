@@ -17,6 +17,8 @@ pub enum Ext4Error {
     OutOfBounds,
     /// Read-only filesystem
     ReadOnly,
+    /// File or directory not found
+    NotFound,
 }
 
 /// Convenience Result type alias.

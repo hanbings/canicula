@@ -1,4 +1,5 @@
 pub mod block_group;
+pub mod dir_entry;
 pub mod extent;
 pub mod inode;
 pub mod superblock;
