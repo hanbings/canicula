@@ -9,6 +9,8 @@ pub mod traits;
 
 // The design calls the module `core/`, but that name shadows the `core` crate.
 // We use `#[path]` so the directory stays `core/` while the Rust module is `fs_core`.
+#[path = "alloc/mod.rs"]
+pub mod fs_alloc;
 #[path = "core/mod.rs"]
 pub mod fs_core;
 
@@ -17,6 +19,11 @@ mod tests;
 
 // Re-exports
 pub use error::Ext4Error;
+pub use fs_alloc::bitmap::{
+    clear_bit, count_zeros, find_first_zero, find_zero_run, set_bit, test_bit,
+};
+pub use fs_alloc::block_alloc::{BlockGroupAllocState, Ext4BlockAllocator};
+pub use fs_alloc::inode_alloc::{Ext4InodeAllocator, InodeGroupAllocState};
 pub use fs_core::block_group_manager::BlockGroupManager;
 pub use fs_core::dir_reader::DirReader;
 pub use fs_core::extent_walker::{ExtentWalker, PhysicalMapping};
@@ -37,4 +44,5 @@ pub use layout::htree::{
 };
 pub use layout::inode::Inode;
 pub use layout::superblock::SuperBlock;
+pub use traits::allocator::{BlockAllocator, InodeAllocator};
 pub use traits::block_device::BlockDevice;

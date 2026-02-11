@@ -23,6 +23,8 @@ pub enum Ext4Error {
     NotDirectory,
     /// Symlink resolution depth exceeded limit
     SymlinkLoop(u32),
+    /// No free blocks or inodes available for allocation
+    NoSpace,
 }
 
 /// Convenience Result type alias.
