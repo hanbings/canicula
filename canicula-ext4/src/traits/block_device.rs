@@ -23,3 +23,51 @@ pub trait BlockDevice {
     /// Flush all pending writes to stable storage.
     fn flush(&mut self) -> ::core::result::Result<(), Ext4Error>;
 }
+
+impl<T: BlockDevice + ?Sized> BlockDevice for &mut T {
+    fn read_block(&self, block_no: u64, buf: &mut [u8]) -> ::core::result::Result<(), Ext4Error> {
+        (**self).read_block(block_no, buf)
+    }
+
+    fn write_block(&mut self, block_no: u64, buf: &[u8]) -> ::core::result::Result<(), Ext4Error> {
+        (**self).write_block(block_no, buf)
+    }
+
+    fn block_size(&self) -> usize {
+        (**self).block_size()
+    }
+
+    fn total_blocks(&self) -> u64 {
+        (**self).total_blocks()
+    }
+
+    fn flush(&mut self) -> ::core::result::Result<(), Ext4Error> {
+        (**self).flush()
+    }
+}
+
+impl<T: BlockDevice + ?Sized> BlockDevice for &T {
+    fn read_block(&self, block_no: u64, buf: &mut [u8]) -> ::core::result::Result<(), Ext4Error> {
+        (**self).read_block(block_no, buf)
+    }
+
+    fn write_block(
+        &mut self,
+        _block_no: u64,
+        _buf: &[u8],
+    ) -> ::core::result::Result<(), Ext4Error> {
+        Err(Ext4Error::ReadOnly)
+    }
+
+    fn block_size(&self) -> usize {
+        (**self).block_size()
+    }
+
+    fn total_blocks(&self) -> u64 {
+        (**self).total_blocks()
+    }
+
+    fn flush(&mut self) -> ::core::result::Result<(), Ext4Error> {
+        Ok(())
+    }
+}
