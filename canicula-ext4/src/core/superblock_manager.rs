@@ -1,5 +1,6 @@
 use crate::error::Result;
 use crate::io::block_reader::BlockReader;
+use crate::layout::checksum::crc32c_raw;
 use crate::layout::superblock::{SUPER_BLOCK_OFFSET, SUPER_BLOCK_SIZE, SuperBlock};
 use crate::traits::block_device::BlockDevice;
 
@@ -22,6 +23,10 @@ pub struct SuperBlockManager {
     pub has_metadata_csum: bool,
     /// Block group descriptor size (64 if 64-bit, else 32).
     pub desc_size: u16,
+    /// Pre-computed checksum seed for block group / inode checksums.
+    ///
+    /// Either `s_checksum_seed` (if CSUM_SEED feature) or `crc32c_raw(!0, uuid)`.
+    pub csum_seed: u32,
 }
 
 impl SuperBlockManager {
@@ -61,6 +66,17 @@ impl SuperBlockManager {
             32
         };
 
+        // Compute checksum seed for bg/inode checksums.
+        // When CSUM_SEED is enabled, s_checksum_seed stores a pre-computed
+        // crc32c(!0, uuid). Use it if non-zero; otherwise compute from UUID.
+        let csum_seed = if super_block.has_csum_seed() && super_block.s_checksum_seed != 0 {
+            super_block.s_checksum_seed
+        } else if has_metadata_csum {
+            crc32c_raw(!0u32, &super_block.s_uuid)
+        } else {
+            0
+        };
+
         Ok(SuperBlockManager {
             super_block,
             block_size,
@@ -68,6 +84,7 @@ impl SuperBlockManager {
             is_64bit,
             has_metadata_csum,
             desc_size,
+            csum_seed,
         })
     }
 }

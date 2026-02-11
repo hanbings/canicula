@@ -2,6 +2,7 @@ use crate::error::{Ext4Error, Result};
 use crate::fs_core::block_group_manager::BlockGroupManager;
 use crate::fs_core::superblock_manager::SuperBlockManager;
 use crate::io::block_reader::BlockReader;
+use crate::layout::checksum::inode_checksum_matches;
 use crate::layout::inode::Inode;
 use crate::traits::block_device::BlockDevice;
 
@@ -54,7 +55,23 @@ impl InodeReader {
         reader.read_bytes(byte_offset, &mut inode_buf[..inode_size])?;
 
         // Parse
-        Inode::parse(&inode_buf[..inode_size], super_block.s_inode_size)
+        let inode = Inode::parse(&inode_buf[..inode_size], super_block.s_inode_size)?;
+
+        if super_block_manager.has_metadata_csum {
+            let ok = inode_checksum_matches(
+                super_block_manager.csum_seed,
+                ino,
+                inode.i_generation,
+                &inode_buf[..inode_size],
+                inode.i_checksum,
+                inode_size > 128,
+            );
+            if !ok {
+                return Err(Ext4Error::InvalidChecksum);
+            }
+        }
+
+        Ok(inode)
     }
 
     /// Read the root directory inode (always inode 2 in ext4).

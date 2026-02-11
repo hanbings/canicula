@@ -2,6 +2,7 @@
 
 use super::{read_u16_le, read_u32_le};
 use crate::error::{Ext4Error, Result};
+use crate::layout::checksum::block_group_checksum_matches;
 
 /// Parsed ext4 block group descriptor.
 ///
@@ -68,7 +69,7 @@ impl BlockGroupDesc {
         Ok(desc)
     }
 
-    // ─── Combined accessors (hi << 32 | lo) ─────────────────────────────────
+    // Combined accessors (hi << 32 | lo)
 
     /// Physical block number of the block bitmap.
     pub fn block_bitmap(&self, is_64bit: bool) -> u64 {
@@ -122,5 +123,13 @@ impl BlockGroupDesc {
         } else {
             self.bg_used_dirs_count_lo as u32
         }
+    }
+
+    /// Verify metadata checksum for this descriptor.
+    pub fn verify_checksum(&self, csum_seed: u32, group_no: u32, raw_desc: &[u8]) -> Result<()> {
+        if !block_group_checksum_matches(csum_seed, group_no, raw_desc, self.bg_checksum) {
+            return Err(Ext4Error::InvalidChecksum);
+        }
+        Ok(())
     }
 }

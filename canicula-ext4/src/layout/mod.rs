@@ -1,6 +1,8 @@
 pub mod block_group;
+pub mod checksum;
 pub mod dir_entry;
 pub mod extent;
+pub mod htree;
 pub mod inode;
 pub mod superblock;
 

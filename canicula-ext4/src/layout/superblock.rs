@@ -2,6 +2,7 @@
 
 use super::{read_u16_le, read_u32_le};
 use crate::error::{Ext4Error, Result};
+use crate::layout::checksum::superblock_checksum_matches;
 
 /// ext4 super block magic number (at offset 0x38).
 pub const EXT4_SUPER_MAGIC: u16 = 0xEF53;
@@ -114,6 +115,13 @@ pub struct SuperBlock {
     pub s_journal_inum: u32,
     pub s_checksum_type: u8,
     pub s_checksum: u32,
+
+    // htree
+    pub s_hash_seed: [u8; 16],
+    pub s_def_hash_version: u8,
+
+    // checksum seed (valid when INCOMPAT_CSUM_SEED is set)
+    pub s_checksum_seed: u32,
 }
 
 impl SuperBlock {
@@ -153,7 +161,21 @@ impl SuperBlock {
             s_journal_inum: read_u32_le(raw, 0xE0),
             s_checksum_type: raw[0x175],
             s_checksum: read_u32_le(raw, 0x3FC),
+            s_hash_seed: {
+                let mut seed = [0u8; 16];
+                seed.copy_from_slice(&raw[0xEC..0xFC]);
+                seed
+            },
+            s_def_hash_version: raw[0xFC],
+            s_checksum_seed: read_u32_le(raw, 0x1B8),
         };
+
+        // metadata_csum enabled: verify superblock checksum.
+        if super_block.has_metadata_csum() {
+            if !superblock_checksum_matches(raw, super_block.s_checksum) {
+                return Err(Ext4Error::InvalidChecksum);
+            }
+        }
 
         Ok(super_block)
     }
@@ -268,5 +290,10 @@ impl SuperBlock {
     /// Whether directory indexing (HTree) is enabled.
     pub fn has_dir_index(&self) -> bool {
         self.s_feature_compat & COMPAT_DIR_INDEX != 0
+    }
+
+    /// Whether the checksum seed feature is enabled.
+    pub fn has_csum_seed(&self) -> bool {
+        self.s_feature_incompat & INCOMPAT_CSUM_SEED != 0
     }
 }

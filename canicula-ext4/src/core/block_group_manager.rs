@@ -29,6 +29,7 @@ impl BlockGroupManager {
         let group_count = super_block_manager.group_count;
         let desc_size = super_block_manager.desc_size as usize;
         let is_64bit = super_block_manager.is_64bit;
+        let has_metadata_csum = super_block_manager.has_metadata_csum;
 
         // Descriptor table start block:
         //   block_size == 1024 → block 2 (block 0 = boot, block 1 = super block)
@@ -53,7 +54,11 @@ impl BlockGroupManager {
 
             let mut offset = 0;
             while offset + desc_size <= block_size && descs_parsed < group_count {
-                let desc = BlockGroupDesc::parse(&block_buf[offset..offset + desc_size], is_64bit)?;
+                let raw_desc = &block_buf[offset..offset + desc_size];
+                let desc = BlockGroupDesc::parse(raw_desc, is_64bit)?;
+                if has_metadata_csum {
+                    desc.verify_checksum(super_block_manager.csum_seed, descs_parsed, raw_desc)?;
+                }
                 descriptors.push(desc);
                 offset += desc_size;
                 descs_parsed += 1;

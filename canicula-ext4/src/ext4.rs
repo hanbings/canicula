@@ -28,8 +28,13 @@ pub use fs_core::symlink::SymlinkReader;
 pub use io::block_reader::BlockReader;
 pub use io::buffer_cache::BufferCache;
 pub use layout::block_group::BlockGroupDesc;
+pub use layout::checksum::{crc32c, crc32c_raw};
 pub use layout::dir_entry::{DirEntry, FileType as DirEntryFileType};
 pub use layout::extent::{EXTENT_HEADER_MAGIC, Extent, ExtentHeader, ExtentIndex};
+pub use layout::htree::{
+    DX_HASH_HALF_MD4, DX_HASH_HALF_MD4_UNSIGNED, DX_HASH_LEGACY, DX_HASH_LEGACY_UNSIGNED,
+    DX_HASH_TEA, DX_HASH_TEA_UNSIGNED, DxEntry, DxNode, DxRoot, compute_hash as htree_compute_hash,
+};
 pub use layout::inode::Inode;
 pub use layout::superblock::SuperBlock;
 pub use traits::block_device::BlockDevice;
