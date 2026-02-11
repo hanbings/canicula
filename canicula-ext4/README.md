@@ -1,1 +1,0 @@
-cargo test -Zbuild-std=std,core,alloc,compiler_builtins --target x86_64-unknown-linux-gnu --package canicula-ext4 --lib -- tests::test::test --exact --nocapture

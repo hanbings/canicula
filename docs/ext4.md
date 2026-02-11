@@ -17,5 +17,5 @@ $ cargo build --target x86_64-unknown-none
 $ cargo build --target aarch64-unknown-none
 $ cargo build --target riscv64gc-unknown-none-elf
 # 运行测试
-$ cargo test --target x86_64-unknown-linux-gnu -Z build-std=std -- --show-output
+$ cargo test -Zbuild-std=std,core,alloc,compiler_builtins --target x86_64-unknown-linux-gnu --package canicula-ext4 --lib -- tests::test::test --exact --nocapture
 ```
