@@ -3,6 +3,7 @@
 extern crate alloc;
 
 pub mod error;
+pub mod fs;
 pub mod io;
 pub mod journal;
 pub mod layout;
@@ -20,6 +21,7 @@ mod tests;
 
 // Re-exports
 pub use error::Ext4Error;
+pub use fs::Ext4FileSystem;
 pub use fs_alloc::bitmap::{
     clear_bit, count_zeros, find_first_zero, find_zero_run, set_bit, test_bit,
 };
@@ -67,3 +69,4 @@ pub use layout::superblock::SuperBlock;
 pub use traits::allocator::{BlockAllocator, InodeAllocator};
 pub use traits::block_device::BlockDevice;
 pub use traits::journal::{Journal, JournalRecovery};
+pub use traits::vfs::{FileSystem, InodeOps};
