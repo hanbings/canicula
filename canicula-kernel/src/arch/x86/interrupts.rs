@@ -10,6 +10,8 @@ use crate::{println, serial_println};
 pub enum InterruptIndex {
     Timer = 32,
     Keyboard = 33,
+    LapicError = 51,
+    Spurious = 0xff,
 }
 
 impl InterruptIndex {
@@ -28,7 +30,7 @@ macro_rules! simple_handlers {
             pub extern "x86-interrupt" fn $name(
                 stack_frame: InterruptStackFrame
             ) {
-                panic!("EXCEPTION: {}\n{:#?}", $info, stack_frame);
+                serial_println!("EXCEPTION: {}\n{:#?}", $info, stack_frame);
             }
         )*
     };
@@ -41,7 +43,7 @@ macro_rules! error_code_handlers {
                 stack_frame: InterruptStackFrame,
                 error_code: u64
             ) {
-                panic!(
+                serial_println!(
                     "EXCEPTION: {} - ERROR CODE: {}\n{:#?}",
                     $info, error_code, stack_frame
                 );
@@ -130,6 +132,10 @@ lazy_static! {
         idt[InterruptIndex::Timer.as_u8()].set_handler_fn(timer_interrupt_handler);
         #[rustfmt::skip]
         idt[InterruptIndex::Keyboard.as_u8()].set_handler_fn(keyboard_interrupt_handler);
+        #[rustfmt::skip]
+        idt[InterruptIndex::LapicError.as_u8()].set_handler_fn(lapic_error_handler);
+        #[rustfmt::skip]
+        idt[InterruptIndex::Spurious.as_u8()].set_handler_fn(spurious_interrupt_handler);
 
         idt
     };
@@ -139,14 +145,17 @@ pub extern "x86-interrupt" fn double_fault_handler(
     stack_frame: InterruptStackFrame,
     error_code: u64,
 ) -> ! {
-    panic!(
-        "EXCEPTION: DOUBLE FAULT - ERROR CODE: {}\n{:#?}",
-        error_code, stack_frame
-    );
+    serial_println!("EXCEPTION: DOUBLE FAULT - ERROR CODE: {}\n{:#?}", error_code, stack_frame);
+    loop {
+        x86_64::instructions::hlt();
+    }
 }
 
 pub extern "x86-interrupt" fn machine_check_handler(stack_frame: InterruptStackFrame) -> ! {
-    panic!("EXCEPTION: MACHINE CHECK\n{:#?}", stack_frame);
+    serial_println!("EXCEPTION: MACHINE CHECK\n{:#?}", stack_frame);
+    loop {
+        x86_64::instructions::hlt();
+    }
 }
 
 pub extern "x86-interrupt" fn page_fault_handler(
@@ -155,7 +164,7 @@ pub extern "x86-interrupt" fn page_fault_handler(
 ) {
     use x86_64::registers::control::Cr2;
 
-    panic!(
+    serial_println!(
         "EXCEPTION: PAGE FAULT - ERROR CODE: {:?}\nAccessed Address: {:?}\n{:#?}",
         error_code,
         Cr2::read(),
@@ -195,6 +204,23 @@ pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: Interrupt
         #[allow(static_mut_refs)]
         LAPIC.get().unwrap().lock().end_interrupts();
     }
+}
+
+pub extern "x86-interrupt" fn lapic_error_handler(_stack_frame: InterruptStackFrame) {
+    use crate::arch::x86::apic::LAPIC;
+
+    warn!("LAPIC ERROR interrupt received");
+
+    // Must send EOI for LAPIC error interrupt
+    unsafe {
+        #[allow(static_mut_refs)]
+        LAPIC.get().unwrap().lock().end_interrupts();
+    }
+}
+
+pub extern "x86-interrupt" fn spurious_interrupt_handler(_stack_frame: InterruptStackFrame) {
+    // Spurious interrupts should NOT send EOI
+    debug!("Spurious interrupt received");
 }
 
 pub fn init() {
