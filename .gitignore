@@ -17,3 +17,6 @@ rustsbi-qemu.bin
 .gdbinit
 
 .tasks
+
+# Log Files
+*.log

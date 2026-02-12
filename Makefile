@@ -111,7 +111,32 @@ qemu:
     -drive if=pflash,format=raw,readonly=on,file=$(OVMF_VARS_PATH) \
     -drive format=raw,file=fat:rw:esp
 
+qemu-debug:
+	qemu-system-x86_64 \
+    -m 256M \
+    -serial stdio \
+    -no-reboot \
+    -no-shutdown \
+    -d int,cpu_reset \
+    -D qemu-int.log \
+    -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
+    -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \
+    -drive if=pflash,format=raw,readonly=on,file=$(OVMF_VARS_PATH) \
+    -drive format=raw,file=fat:rw:esp
+
+qemu-monitor:
+	qemu-system-x86_64 \
+    -m 256M \
+    -serial mon:stdio \
+    -enable-kvm \
+    -no-reboot \
+    -no-shutdown \
+    -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
+    -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \
+    -drive if=pflash,format=raw,readonly=on,file=$(OVMF_VARS_PATH) \
+    -drive format=raw,file=fat:rw:esp
+
 kill-qemu:
 	pgrep qemu | xargs kill -9
 
-.PHONY: efi kernel initramfs vmlinuz clean qemu kill-qemu clean-esp all
+.PHONY: efi kernel initramfs vmlinuz clean qemu qemu-debug qemu-monitor kill-qemu clean-esp all
