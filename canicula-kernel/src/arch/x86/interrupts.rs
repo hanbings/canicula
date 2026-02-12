@@ -145,7 +145,11 @@ pub extern "x86-interrupt" fn double_fault_handler(
     stack_frame: InterruptStackFrame,
     error_code: u64,
 ) -> ! {
-    serial_println!("EXCEPTION: DOUBLE FAULT - ERROR CODE: {}\n{:#?}", error_code, stack_frame);
+    serial_println!(
+        "EXCEPTION: DOUBLE FAULT - ERROR CODE: {}\n{:#?}",
+        error_code,
+        stack_frame
+    );
     loop {
         x86_64::instructions::hlt();
     }
