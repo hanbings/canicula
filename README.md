@@ -61,6 +61,10 @@ make qemu
 
 [Ext - Ext4 文件系统（WIP）](docs/ext4.md)
 
+[Ext - Hypervisor（WIP）](docs/hypervisor.md)
+
+[Ext - 如何调试](docs/debug.md)
+
 **引用名称说明**
 
 | 手册                                                         | 原始链接                                                     | 文中引用名称 |

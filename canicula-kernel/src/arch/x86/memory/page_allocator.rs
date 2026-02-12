@@ -18,10 +18,13 @@ impl AbyssFrameAllocator {
     }
 
     fn usable_frames(&self) -> impl Iterator<Item = PhysFrame> {
+        const MIN_USABLE_PA: u64 = 0x0010_0000;
         let regions = self.memory_map.iter();
         let usable_regions = regions.filter(|r| r.kind == MemoryRegionKind::Usable);
         let addr_ranges = usable_regions.map(|r| r.start..r.end);
-        let frame_addresses = addr_ranges.flat_map(|r| r.step_by(4096));
+        let frame_addresses = addr_ranges
+            .flat_map(|r| r.step_by(4096))
+            .filter(|&addr| (addr as u64) >= MIN_USABLE_PA);
         frame_addresses.map(|addr| PhysFrame::containing_address(PhysAddr::new(addr)))
     }
 }

@@ -17,9 +17,19 @@ lazy_static! {
     static ref PHYSICAL_MEMORY_OFFSET: Once<VirtAddr> = Once::new();
 }
 
+pub fn physical_memory_offset() -> VirtAddr {
+    *PHYSICAL_MEMORY_OFFSET
+        .get()
+        .expect("PHYSICAL_MEMORY_OFFSET not initialized")
+}
+
 pub unsafe fn physical_to_virtual(addr: PhysAddr) -> VirtAddr {
     let phys = PHYSICAL_MEMORY_OFFSET.get().unwrap();
     VirtAddr::new(phys.as_u64() + addr.as_u64())
+}
+
+pub unsafe fn virtual_to_physical_current(addr: VirtAddr) -> Option<PhysAddr> {
+    unsafe { virtual_to_physical(addr, physical_memory_offset()) }
 }
 
 pub unsafe fn virtual_to_physical(
