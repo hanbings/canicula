@@ -185,10 +185,14 @@ pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFram
 pub extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
     use crate::arch::x86::apic::LAPIC;
 
+    // EOI must be sent before context_switch, because the switch may not
+    // return to this handler until this task is scheduled again.
     unsafe {
         #[allow(static_mut_refs)]
         LAPIC.get().unwrap().lock().end_interrupts();
     }
+
+    crate::arch::x86::scheduler::tick();
 }
 
 pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
