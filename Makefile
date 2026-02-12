@@ -116,10 +116,14 @@ qemu:
 	-nographic
 
 qemu-debug:
+	@echo "QEMU gdbstub listening on tcp:127.0.0.1:1234"
+	@echo "Attach with: gdb -ex 'target remote :1234'"
 	qemu-system-x86_64 \
     -m 256M \
-    -serial stdio \
+    -serial mon:stdio \
 	-enable-kvm \
+    -s \
+    -S \
     -no-reboot \
     -no-shutdown \
     -d int,cpu_reset \
@@ -128,22 +132,16 @@ qemu-debug:
     -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
     -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \
     -drive if=pflash,format=raw,readonly=on,file=$(OVMF_VARS_PATH) \
-    -drive format=raw,file=fat:rw:esp
+    -drive format=raw,file=fat:rw:esp \
+	-nographic
 
-qemu-monitor:
-	qemu-system-x86_64 \
-    -m 256M \
-    -serial mon:stdio \
-    -enable-kvm \
-	-cpu host \
-    -no-reboot \
-    -no-shutdown \
-    -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
-    -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \
-    -drive if=pflash,format=raw,readonly=on,file=$(OVMF_VARS_PATH) \
-    -drive format=raw,file=fat:rw:esp
+lldb-qemu:
+	@echo "Connecting LLDB to QEMU gdbstub at 127.0.0.1:1234"
+	lldb \
+	  -o "target create /home/hanbings/github/canicula/target/x86_64-canicula-kernel/release/canicula-kernel" \
+	  -o "gdb-remote 127.0.0.1:1234"
 
 kill-qemu:
 	pgrep qemu | xargs kill -9
 
-.PHONY: efi kernel initramfs vmlinuz clean qemu qemu-debug qemu-monitor kill-qemu clean-esp all
+.PHONY: efi kernel initramfs vmlinuz clean qemu qemu-debug lldb-qemu qemu-monitor qemu-debug-tcp-monitor kill-qemu clean-esp all

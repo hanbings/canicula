@@ -247,7 +247,9 @@ unsafe fn read_rflags() -> u64 {
 }
 
 pub fn run_test_guest() -> ! {
-    const GUEST_STUB: &[u8] = &[0x0f, 0x01, 0xd9, 0xf4];
+    // Use two VMMCALL instructions for deterministic testing under nested SVM.
+    // Some KVM nested setups do not reliably deliver HLT intercepts for this toy guest.
+    const GUEST_STUB: &[u8] = &[0x0f, 0x01, 0xd9, 0x0f, 0x01, 0xd9];
 
     let mut ctx = match init_minimal() {
         Ok(ctx) => ctx,
@@ -297,6 +299,9 @@ pub fn run_test_guest() -> ! {
     let (host_cr3_frame, _) = x86_64::registers::control::Cr3::read();
     let host_cr3 = host_cr3_frame.start_address().as_u64();
     let host_rflags = unsafe { read_rflags() };
+    // Keep guest interrupts masked in this minimal test path so we can
+    // deterministically execute VMMCALL -> HLT without handling timer/APIC events.
+    let guest_rflags = host_rflags & !(1 << 9);
 
     let gdtr = unsafe { sgdt() };
     let idtr = unsafe { sidt() };
@@ -380,7 +385,7 @@ pub fn run_test_guest() -> ! {
         ctx.vmcb
             .write_u64(vmcb::VMCB_SAVE_BASE + vmcb::save::DR7, 0x0000_0400);
         ctx.vmcb
-            .write_u64(vmcb::VMCB_SAVE_BASE + vmcb::save::RFLAGS, host_rflags);
+            .write_u64(vmcb::VMCB_SAVE_BASE + vmcb::save::RFLAGS, guest_rflags);
         ctx.vmcb
             .write_u64(vmcb::VMCB_SAVE_BASE + vmcb::save::RIP, guest_rip);
         ctx.vmcb
@@ -408,30 +413,94 @@ pub fn run_test_guest() -> ! {
     );
 
     x86_64::instructions::interrupts::disable();
+    let mut vmmcall_exits: u32 = 0;
     loop {
+        // Clear VMCB clean bits to force CPU to reload all state from VMCB
+        unsafe {
+            ctx.vmcb.write_u64(vmcb::control::CLEAN, 0);
+        }
+
+        // Debug: dump VMCB guest RIP/RSP/CR3 before VMRUN
+        let pre_rip = unsafe { ctx.vmcb.read_u64(vmcb::VMCB_SAVE_BASE + vmcb::save::RIP) };
+        let pre_rsp = unsafe { ctx.vmcb.read_u64(vmcb::VMCB_SAVE_BASE + vmcb::save::RSP) };
+        let pre_cr3 = unsafe { ctx.vmcb.read_u64(vmcb::VMCB_SAVE_BASE + vmcb::save::CR3) };
+        let pre_efer = unsafe { ctx.vmcb.read_u64(vmcb::VMCB_SAVE_BASE + vmcb::save::EFER) };
+        info!(
+            "SVM pre-VMRUN: guest_rip={:#x} guest_rsp={:#x} guest_cr3={:#x} guest_efer={:#x} vmcb_pa={:#x}",
+            pre_rip, pre_rsp, pre_cr3, pre_efer, ctx.vmcb_pa
+        );
+
         unsafe {
             asm!(
+                // Save host callee-saved registers that VMRUN does NOT restore on VMEXIT.
+                "push rbx",
+                "push rbp",
+                "push r12",
+                "push r13",
+                "push r14",
+                "push r15",
+                // VMRUN clears GIF automatically on entry.
                 "vmrun",
+                // STGI: Restore Global Interrupt Flag after VMEXIT.
+                // VMEXIT does NOT restore GIF, so we must do it explicitly.
+                // Without STGI, host runs with GIF=0 which breaks KVM nested SVM state.
+                "stgi",
+                "pop r15",
+                "pop r14",
+                "pop r13",
+                "pop r12",
+                "pop rbp",
+                "pop rbx",
                 in("rax") ctx.vmcb_pa,
                 clobber_abi("sysv64"),
-                options(nostack),
             );
         }
 
         let code = unsafe { ctx.vmcb.read_u32(vmcb::control::EXIT_CODE) };
+        info!("SVM post-VMRUN: exit_code={:#x}", code);
+
         match code {
             vmcb::exit_code::VMMCALL => {
+                vmmcall_exits = vmmcall_exits.wrapping_add(1);
+                let cur_rip = unsafe { ctx.vmcb.read_u64(vmcb::VMCB_SAVE_BASE + vmcb::save::RIP) };
                 let next_rip = unsafe { ctx.vmcb.read_u64(vmcb::control::NEXT_RIP) };
-                info!("SVM VMEXIT: VMMCALL next_rip={:#x}", next_rip);
+                let insn_len = unsafe { ctx.vmcb.read_u32(vmcb::control::INSN_LEN) as u64 };
+                // Some environments do not provide NEXT_RIP reliably for every VMMCALL
+                // (e.g. decode-assist differences under nested virtualization). Fall back
+                // to RIP + INSN_LEN and then to the known VMMCALL length (3 bytes).
+                let resume_rip = if next_rip != 0 {
+                    next_rip
+                } else if insn_len != 0 {
+                    cur_rip.wrapping_add(insn_len)
+                } else {
+                    cur_rip.wrapping_add(3)
+                };
+                info!(
+                    "SVM VMEXIT: VMMCALL #{} cur_rip={:#x} next_rip={:#x} insn_len={} resume_rip={:#x}",
+                    vmmcall_exits, cur_rip, next_rip, insn_len, resume_rip
+                );
+                if vmmcall_exits >= 2 {
+                    info!("SVM VMEXIT: second VMMCALL observed (powering off)");
+                    crate::arch::x86::acpi::shutdown();
+                    loop {
+                        unsafe { asm!("hlt", options(nomem, nostack, preserves_flags)) };
+                    }
+                }
                 unsafe {
                     ctx.vmcb
-                        .write_u64(vmcb::VMCB_SAVE_BASE + vmcb::save::RIP, next_rip);
+                        .write_u64(vmcb::VMCB_SAVE_BASE + vmcb::save::RIP, resume_rip);
                 }
-                info!("SVM guest resume: rip <= next_rip, re-entering VMRUN");
+                // Verify the write
+                let verify_rip =
+                    unsafe { ctx.vmcb.read_u64(vmcb::VMCB_SAVE_BASE + vmcb::save::RIP) };
+                info!(
+                    "SVM guest resume: wrote rip={:#x}, verified rip={:#x}",
+                    resume_rip, verify_rip
+                );
             }
             vmcb::exit_code::HLT => {
                 info!("SVM VMEXIT: HLT (powering off)");
-                qemu::shutdown(0);
+                crate::arch::x86::acpi::shutdown();
                 loop {
                     unsafe { asm!("hlt", options(nomem, nostack, preserves_flags)) };
                 }
