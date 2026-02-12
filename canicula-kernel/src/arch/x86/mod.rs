@@ -35,9 +35,9 @@ pub fn entry(boot_info: &'static mut canicula_common::entry::BootInfo) -> ! {
     crate::arch::x86::logging::init();
     crate::arch::x86::console::init(boot_info.framebuffer.as_mut().unwrap());
 
-    crate::arch::x86::interrupts::init();
     crate::arch::x86::gdt::init();
-    info!("Interrupts initialized");
+    crate::arch::x86::interrupts::init();
+    info!("GDT and IDT initialized");
 
     let boot_info = crate::arch::x86::memory::init(boot_info);
     info!("Memory initialized");
@@ -45,10 +45,9 @@ pub fn entry(boot_info: &'static mut canicula_common::entry::BootInfo) -> ! {
     crate::arch::x86::acpi::init(boot_info.rsdp_addr.as_ref().unwrap());
     info!("ACPI Initialized");
 
-    // TODO: After switching to canicula-loader and encountered many problems with ACPI initialization. orz
-    // crate::arch::x86::apic::init(boot_info.rsdp_addr.as_ref().unwrap());
-    // crate::arch::x86::interrupts::enable_interrupts();
-    // info!("APIC Initialized");
+    crate::arch::x86::apic::init(boot_info.rsdp_addr.as_ref().unwrap());
+    crate::arch::x86::interrupts::enable_interrupts();
+    info!("APIC Initialized");
 
     crate::arch::x86::pcie::init();
     info!("PCIe Initialized");
