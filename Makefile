@@ -1,6 +1,7 @@
 OS := $(shell uname)
 DISTRO := $(shell cat /etc/*release | grep '^ID=' | cut -d '=' -f2)
 LOG_LEVEL ?= DEBUG
+KERNEL_FEATURES ?=
 
 KERNEL_VERSION ?= $(shell uname -r)
 VMLINUZ_SRC ?= /boot/vmlinuz-$(KERNEL_VERSION)
@@ -43,6 +44,7 @@ kernel:
 	    -Z build-std-features=compiler-builtins-mem \
 		-Z json-target-spec -p canicula-kernel \
 		--release \
+		$(if $(KERNEL_FEATURES),--features $(KERNEL_FEATURES),) \
 		--target canicula-kernel/x86_64-canicula-kernel.json
 	mkdir -p esp
 	cp target/x86_64-canicula-kernel/release/canicula-kernel esp/kernel-x86_64
@@ -104,21 +106,25 @@ clean-esp:
 qemu:
 	qemu-system-x86_64 \
     -m 256M \
-    -serial stdio \
+    -serial mon:stdio \
     -enable-kvm \
+	-cpu host \
     -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
     -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \
     -drive if=pflash,format=raw,readonly=on,file=$(OVMF_VARS_PATH) \
-    -drive format=raw,file=fat:rw:esp
+    -drive format=raw,file=fat:rw:esp \
+	-nographic
 
 qemu-debug:
 	qemu-system-x86_64 \
     -m 256M \
     -serial stdio \
+	-enable-kvm \
     -no-reboot \
     -no-shutdown \
     -d int,cpu_reset \
     -D qemu-int.log \
+	-cpu host \
     -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
     -drive if=pflash,format=raw,readonly=on,file=$(OVMF_CODE_PATH) \
     -drive if=pflash,format=raw,readonly=on,file=$(OVMF_VARS_PATH) \
@@ -129,6 +135,7 @@ qemu-monitor:
     -m 256M \
     -serial mon:stdio \
     -enable-kvm \
+	-cpu host \
     -no-reboot \
     -no-shutdown \
     -device isa-debug-exit,iobase=0xf4,iosize=0x04 \

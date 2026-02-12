@@ -42,6 +42,12 @@ pub fn entry(boot_info: &'static mut canicula_common::entry::BootInfo) -> ! {
     let boot_info = crate::arch::x86::memory::init(boot_info);
     info!("Memory initialized");
 
+    #[cfg(feature = "svm")]
+    crate::arch::x86::virtualization::svm::maybe_init_at_boot();
+
+    #[cfg(feature = "svm_run")]
+    crate::arch::x86::virtualization::svm::run_test_guest();
+
     crate::arch::x86::acpi::init(boot_info.rsdp_addr.as_ref().unwrap());
     info!("ACPI Initialized");
 
