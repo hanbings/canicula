@@ -12,11 +12,11 @@ mod virtualization;
 mod apic;
 mod bga;
 mod console;
+mod context;
 mod gdt;
 mod interrupts;
 mod logging;
 mod pcie;
-mod context;
 mod process;
 mod qemu;
 mod scheduler;
@@ -50,8 +50,8 @@ pub fn entry(boot_info: &'static mut canicula_common::entry::BootInfo) -> ! {
     crate::arch::x86::apic::init(boot_info.rsdp_addr.as_ref().unwrap());
     info!("APIC Initialized");
 
+    crate::arch::x86::process::init();
     crate::arch::x86::scheduler::init();
-    info!("Scheduler initialized");
 
     crate::arch::x86::pcie::init();
     info!("PCIe Initialized");

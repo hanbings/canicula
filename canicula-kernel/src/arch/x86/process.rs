@@ -1,99 +1,139 @@
-use core::iter::Map;
-
-use lazy_static::lazy_static;
+use log::info;
+use spin::Mutex;
 
 extern crate alloc;
+use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 
-lazy_static! {
-    pub static ref PROCESSES: Processes = Processes {
-        processes: Vec::new(),
-    };
-}
+use x86_64::registers::control::Cr3;
 
-#[allow(unused_variables)]
-pub fn entry_point(args: &[&str]) {}
-
-#[derive(Debug, Clone)]
-pub struct Processes {
-    // Processes list fot pre physical processor
-    processes: Vec<Map<usize, ProcessControlBlock>>,
-}
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ProcessState {
     Running,
-    Waiting,
-    Stopped,
     Zombie,
-    Terminated,
+    Exited,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct ProcessRegister {
-    eax: usize,
-    ebx: usize,
-    ecx: usize,
-    edx: usize,
-    esi: usize,
-    edi: usize,
-    ebp: usize,
-    esp: usize,
-}
-
-#[derive(Debug, Clone, Copy)]
 pub struct ProcessControlBlock {
-    process_id: usize,
-    process_state: ProcessState,
-    process_priority: usize,
-    created_time: usize,
-    group_id: usize,
-    parent_id: usize,
-    user_id: usize,
-    exit_code: usize,
-
-    entry_point: usize,
-
-    page_table: usize,
-    stack_pointer: usize,
-    instruction_pointer: usize,
-    register: ProcessRegister,
+    pub pid: u64,
+    pub name: &'static str,
+    pub state: ProcessState,
+    pub parent_pid: Option<u64>,
+    pub threads: Vec<u64>,
+    pub exit_code: Option<i32>,
+    /// Physical address of the PML4 page table (CR3 value).
+    /// Currently all processes share the kernel page table.
+    pub page_table: u64,
 }
 
-impl ProcessControlBlock {
-    pub fn new(entry_point: usize) -> Self {
-        ProcessControlBlock {
-            process_id: 0,
-            process_state: ProcessState::Running,
-            process_priority: 0,
-            created_time: 0,
-            group_id: 0,
-            parent_id: 0,
-            user_id: 0,
-            exit_code: 0,
+pub struct ProcessTable {
+    processes: BTreeMap<u64, ProcessControlBlock>,
+    next_pid: u64,
+}
 
-            entry_point,
-
-            page_table: 0,
-            stack_pointer: 0,
-            instruction_pointer: 0,
-            register: ProcessRegister {
-                eax: 0,
-                ebx: 0,
-                ecx: 0,
-                edx: 0,
-                esi: 0,
-                edi: 0,
-                ebp: 0,
-                esp: 0,
-            },
+impl ProcessTable {
+    pub const fn new() -> Self {
+        ProcessTable {
+            processes: BTreeMap::new(),
+            next_pid: 0,
         }
+    }
+
+    pub fn alloc_pid(&mut self) -> u64 {
+        let pid = self.next_pid;
+        self.next_pid += 1;
+        pid
+    }
+
+    pub fn insert(&mut self, pcb: ProcessControlBlock) {
+        self.processes.insert(pcb.pid, pcb);
+    }
+
+    pub fn get(&self, pid: u64) -> Option<&ProcessControlBlock> {
+        self.processes.get(&pid)
+    }
+
+    pub fn get_mut(&mut self, pid: u64) -> Option<&mut ProcessControlBlock> {
+        self.processes.get_mut(&pid)
+    }
+
+    pub fn len(&self) -> usize {
+        self.processes.len()
     }
 }
 
-pub fn create_process(_entry_point: usize) {}
-pub fn distory_process(_pid: usize) {}
-pub fn switch_process(_pid: usize) {}
-pub fn wait_process(_pid: usize) {}
-pub fn exit_process(_pid: usize, _exit_code: usize) {}
-pub fn poll_process() {}
+pub static PROCESS_TABLE: Mutex<ProcessTable> = Mutex::new(ProcessTable::new());
+
+/// Create a new process with a main thread executing `entry_fn`.
+/// Returns the new process's PID.
+pub fn create_process(name: &'static str, entry_fn: fn() -> !) -> u64 {
+    let pid = {
+        let mut table = PROCESS_TABLE.lock();
+        let pid = table.alloc_pid();
+        let (cr3_frame, _) = Cr3::read();
+        let page_table = cr3_frame.start_address().as_u64();
+
+        let pcb = ProcessControlBlock {
+            pid,
+            name,
+            state: ProcessState::Running,
+            parent_pid: if pid == 0 { None } else { Some(0) },
+            threads: Vec::new(),
+            exit_code: None,
+            page_table,
+        };
+        table.insert(pcb);
+        pid
+    };
+    // PROCESS_TABLE lock is dropped here
+
+    // Spawn the main thread for this process
+    let tid = super::scheduler::spawn_thread(pid, entry_fn);
+
+    // Record the TID in the PCB
+    {
+        let mut table = PROCESS_TABLE.lock();
+        if let Some(pcb) = table.get_mut(pid) {
+            pcb.threads.push(tid);
+        }
+    }
+
+    info!(
+        "Process {} ({}) created with main thread {}",
+        pid, name, tid
+    );
+    pid
+}
+
+/// Mark a process as Zombie and all its threads as Exited.
+pub fn exit_process(pid: u64, exit_code: i32) {
+    let thread_ids = {
+        let mut table = PROCESS_TABLE.lock();
+        if let Some(pcb) = table.get_mut(pid) {
+            pcb.state = ProcessState::Zombie;
+            pcb.exit_code = Some(exit_code);
+            pcb.threads.clone()
+        } else {
+            return;
+        }
+    };
+
+    // Mark all threads as exited
+    for tid in thread_ids {
+        super::scheduler::mark_thread_exited(tid);
+    }
+
+    info!("Process {} exited with code {}", pid, exit_code);
+}
+
+/// Returns the PID of the currently running thread's process.
+pub fn current_pid() -> u64 {
+    super::scheduler::current_pid()
+}
+
+/// Initialize the process table. Must be called after heap init.
+pub fn init() {
+    // Process table is ready (const-initialized).
+    // PID 0 (kernel process) will be created by scheduler::init().
+    info!("Process table initialized");
+}
