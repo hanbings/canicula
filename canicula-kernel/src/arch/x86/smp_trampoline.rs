@@ -1,6 +1,6 @@
 use core::arch::global_asm;
 
-global_asm!(include_str!("smp_trampoline.S"));
+global_asm!(include_str!("smp_trampoline.S"), options(att_syntax));
 
 unsafe extern "C" {
     static ap_trampoline_start: u8;

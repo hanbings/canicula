@@ -166,7 +166,7 @@ pub fn init(boot_info: &'static canicula_common::entry::BootInfo) {
                 ApTrampolineData {
                     cr3_low: cr3_phys as u32,
                     _reserved0: 0,
-                    entry: ap_rust_entry as usize as u64,
+                    entry: ap_rust_entry as *const () as usize as u64,
                     stack_top,
                     cpu_id,
                     apic_id,

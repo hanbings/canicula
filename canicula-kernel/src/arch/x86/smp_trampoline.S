@@ -1,4 +1,3 @@
-.att_syntax prefix
 .section .ap_trampoline, "ax"
 .global ap_trampoline_start
 .global ap_trampoline_end
