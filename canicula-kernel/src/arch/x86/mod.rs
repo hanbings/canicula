@@ -21,6 +21,8 @@ mod process;
 mod qemu;
 mod scheduler;
 mod serial;
+mod smp;
+mod smp_trampoline;
 
 extern crate alloc;
 
@@ -49,6 +51,8 @@ pub fn entry(boot_info: &'static mut canicula_common::entry::BootInfo) -> ! {
 
     crate::arch::x86::apic::init(boot_info.rsdp_addr.as_ref().unwrap());
     info!("APIC Initialized");
+
+    crate::arch::x86::smp::init(boot_info);
 
     crate::arch::x86::process::init();
     crate::arch::x86::scheduler::init();

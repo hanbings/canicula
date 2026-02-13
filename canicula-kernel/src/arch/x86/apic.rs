@@ -122,9 +122,29 @@ impl LApic {
         }
     }
 
+    pub fn id(&self) -> u32 {
+        unsafe { self.lapic.as_ref().unwrap().id() }
+    }
+
+    pub fn is_bsp(&self) -> bool {
+        unsafe { self.lapic.as_ref().unwrap().is_bsp() }
+    }
+
     pub fn end_interrupts(&mut self) {
         unsafe {
             self.lapic.as_mut().unwrap().end_of_interrupt();
+        }
+    }
+
+    pub fn send_init_ipi(&mut self, dest_apic_id: u32) {
+        unsafe {
+            self.lapic.as_mut().unwrap().send_init_ipi(dest_apic_id);
+        }
+    }
+
+    pub fn send_sipi(&mut self, vector: u8, dest_apic_id: u32) {
+        unsafe {
+            self.lapic.as_mut().unwrap().send_sipi(vector, dest_apic_id);
         }
     }
 }

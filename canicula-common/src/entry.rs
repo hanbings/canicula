@@ -14,6 +14,11 @@ pub struct BootInfo {
     pub physical_memory_offset: Option<u64>,
     /// RSDP address for ACPI, if available.
     pub rsdp_addr: Option<u64>,
+    /// A 4KiB page below 1MiB used for AP startup trampoline (x86 SMP).
+    ///
+    /// If present, this physical address must be 4KiB-aligned and the page
+    /// must be identity-mapped so it can be used as a SIPI wakeup vector.
+    pub smp_trampoline: Option<u64>,
 }
 
 impl BootInfo {
@@ -23,6 +28,7 @@ impl BootInfo {
             framebuffer: None,
             physical_memory_offset: None,
             rsdp_addr: None,
+            smp_trampoline: None,
         }
     }
 }

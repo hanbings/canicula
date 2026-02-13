@@ -27,6 +27,7 @@ static mut BOOT_INFO: BootInfo = BootInfo {
     framebuffer: None,
     physical_memory_offset: None,
     rsdp_addr: None,
+    smp_trampoline: None,
 };
 
 /// Page table configuration for deferred initialization
@@ -334,6 +335,17 @@ pub fn boot_canicula_kernel() -> Status {
         stack_top
     );
 
+    // Allocate a low (< 1MiB) page for SMP AP trampoline (used as SIPI vector).
+    // Keep it in LOADER_DATA so it won't be reused after ExitBootServices.
+    let trampoline_ptr = uefi::boot::allocate_pages(
+        AllocateType::MaxAddress(0x000F_F000),
+        UefiMemoryType::LOADER_DATA,
+        1,
+    )
+    .expect("Failed to allocate SMP trampoline page below 1MiB");
+    let trampoline_phys = trampoline_ptr.as_ptr() as u64;
+    info!("SMP trampoline page: phys={:#x}", trampoline_phys);
+
     // Get graphics info
     let gop_handler = uefi::boot::get_handle_for_protocol::<GraphicsOutput>().unwrap();
     let mut gop = uefi::boot::open_protocol_exclusive::<GraphicsOutput>(gop_handler).unwrap();
@@ -401,6 +413,9 @@ pub fn boot_canicula_kernel() -> Status {
 
         // Set RSDP address
         (*boot_info_ptr).rsdp_addr = rsdp_addr;
+
+        // Set SMP trampoline page physical address
+        (*boot_info_ptr).smp_trampoline = Some(trampoline_phys);
     }
 
     // Initialize page tables after exit_boot_services

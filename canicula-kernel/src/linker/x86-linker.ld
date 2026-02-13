@@ -14,6 +14,8 @@ SECTIONS {
   .text ALIGN(4K):
   {
     *(.text .text.*)
+    /* x86 SMP AP trampoline (copied to a low 4KiB page at runtime). */
+    KEEP(*(.ap_trampoline))
   }
 
   .data ALIGN(4K):

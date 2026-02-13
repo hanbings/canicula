@@ -2,6 +2,7 @@ OS := $(shell uname)
 DISTRO := $(shell cat /etc/*release | grep '^ID=' | cut -d '=' -f2)
 LOG_LEVEL ?= DEBUG
 KERNEL_FEATURES ?=
+SMP ?= 4
 
 KERNEL_VERSION ?= $(shell uname -r)
 VMLINUZ_SRC ?= /boot/vmlinuz-$(KERNEL_VERSION)
@@ -106,6 +107,7 @@ clean-esp:
 qemu:
 	qemu-system-x86_64 \
     -m 256M \
+	-smp $(SMP) \
     -serial mon:stdio \
     -enable-kvm \
 	-cpu host \
@@ -120,6 +122,7 @@ qemu-debug:
 	@echo "Attach with: gdb -ex 'target remote :1234'"
 	qemu-system-x86_64 \
     -m 256M \
+	-smp $(SMP) \
     -serial mon:stdio \
 	-enable-kvm \
     -s \
