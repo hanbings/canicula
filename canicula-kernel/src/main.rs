@@ -12,15 +12,21 @@ mod resources;
 mod types;
 
 #[unsafe(no_mangle)]
-#[cfg(target_arch = "riscv64")]
-pub fn kernel() -> ! {
-    arch::riscv::entry();
-}
-
-#[unsafe(no_mangle)]
 #[cfg(target_arch = "aarch64")]
 pub fn kernel() -> ! {
     arch::aarch::entry();
+}
+
+#[unsafe(no_mangle)]
+#[cfg(target_arch = "loongarch64")]
+pub fn kernel() -> ! {
+    arch::loongarch::entry();
+}
+
+#[unsafe(no_mangle)]
+#[cfg(target_arch = "riscv64")]
+pub fn kernel() -> ! {
+    arch::riscv::entry();
 }
 
 /// Entry point called by the bootloader.
