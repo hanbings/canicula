@@ -18,5 +18,8 @@ rustsbi-qemu.bin
 
 .tasks
 
+# nix-direnv cache
+.direnv/
+
 # Log Files
 *.log

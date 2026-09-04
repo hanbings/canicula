@@ -10,6 +10,26 @@
 
 ## 🔨 快速构建
 
+### Nix 开发环境
+
+如果已启用 [Nix Flakes](https://nixos.wiki/wiki/Flakes)，可以直接进入包含固定 Rust nightly、QEMU、OVMF 和项目工具的开发环境：
+
+```shell
+nix develop
+make
+```
+
+Rust 工具链版本和构建目标继续由 `rust-toolchain.toml` 统一管理。
+当前 Flake 支持 Apple Silicon macOS，以及 x86_64/aarch64 Linux。
+
+如果已安装 [direnv](https://direnv.net/) 和 nix-direnv，项目中的 `.envrc` 会在进入目录时自动激活同一个开发环境。首次使用时执行：
+
+```shell
+direnv allow
+```
+
+### 手动配置
+
 ```shell
 git submodule init
 git submodule update
